@@ -13,7 +13,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
-from project_config import DATABASE_PATH, SQL_TABLE_NAME
+from config import DATABASE_PATH, SQL_TABLE_NAME
 
 
 load_dotenv(override=True)
@@ -93,7 +93,7 @@ def query_database_with_ai(user_question: str) -> tuple[str | None, dict[str, An
         fails, and `result` is either a result dictionary or a user-facing error.
     """
     if not DATABASE_PATH.exists():
-        return None, f"Database not found. Run `python predictive_engine.py` first."
+        return None, "Database not found. Run `python train_retention_risk_model.py` first."
     if not os.getenv("OPENAI_API_KEY"):
         return None, "OPENAI_API_KEY is not configured. Add it to `.env` to use AI queries."
 

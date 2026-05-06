@@ -1,35 +1,81 @@
 # AttriSense
 
-AttriSense is an AI-powered workforce intelligence platform that helps leaders see retention risk before it becomes resignation volume. It combines synthetic HR data generation, machine learning flight-risk scoring, natural-language SQL, and an executive Streamlit dashboard in one maintainable Python project.
+AttriSense is a production-readable workforce intelligence demo that turns HR data into retention-risk decisions. It generates synthetic employee data, trains a retention-risk model, stores predictions in SQLite, exposes an executive Streamlit dashboard, and supports natural-language SQL for non-technical users.
 
 Repository: https://github.com/Dogiparthi-Sharada/AttriSense
 
-## Why It Matters
+![AttriSense product overview](assets/product_overview.png)
 
-Employee attrition is expensive, noisy, and usually spotted too late. AttriSense turns workforce data into a simple operating view:
+## What This Project Proves
 
-- Who is most likely to leave?
-- Which departments carry the largest risk concentration?
-- What interventions should HR prioritize this week?
-- How can non-technical users ask questions without writing SQL?
+Attrition is expensive because leaders often discover risk after it becomes resignation volume. AttriSense shows how a compact AI system can answer:
 
-The current repo ships with synthetic data, so it is safe to demo publicly while preserving the shape of a real enterprise workforce analytics system.
+- Which employees are most likely to leave?
+- Which departments carry the highest risk concentration?
+- What should HR prioritize first?
+- How can a business user ask the data questions without writing SQL?
 
-## Product Snapshot
+The current dataset is synthetic, so the project is safe to run, demo, publish, and extend without exposing employee information.
 
-| Capability | What it does |
+## Product Capabilities
+
+| Capability | Production purpose |
 | --- | --- |
-| Executive dashboard | Shows total workforce, risk bands, department concentration, and action priorities. |
-| Predictive model | Trains a Random Forest classifier with SMOTE balancing for turnover risk scoring. |
-| Natural-language data assistant | Converts HR questions into read-only SQLite queries using LangChain and OpenAI. |
-| RAG-ready exit interview index | Builds a FAISS vector store from synthetic exit interview notes. |
-| Public Streamlit runner | Starts the app on `0.0.0.0` so it can be exposed by a host, VM, or deployment platform. |
+| Executive dashboard | Gives leaders a fast read on total workforce, risk bands, department concentration, and intervention priorities. |
+| Retention-risk model | Uses Random Forest plus SMOTE to learn rare turnover patterns and score each employee. |
+| Natural-language SQL | Converts plain-English HR questions into guarded, read-only SQLite queries. |
+| Exit-interview vector index | Builds a FAISS index for semantic analysis of synthetic exit interview notes. |
+| Public Streamlit launcher | Runs the app on `0.0.0.0` so it can be exposed from a VM, server, tunnel, or deployment platform. |
 
-## Sample Outputs
+## Visual Outputs
 
-The included demo database contains `5,000` synthetic employees.
+The images below are generated from the real SQLite output by `create_readme_assets.py`.
 
-### Dashboard KPIs
+![Risk distribution](assets/risk_distribution.png)
+
+![High-risk employees by department](assets/high_risk_by_department.png)
+
+![AttriSense architecture](assets/architecture.png)
+
+## Real Run Evidence
+
+Pipeline output captured in [outputs/pipeline_run.txt](outputs/pipeline_run.txt):
+
+```text
+AttriSense Pipeline Run
+======================
+
+$ python.exe generate_demo_workforce_data.py
+Generated 5,000 synthetic employees at attrisense_synthetic_hr.csv.
+exit_code=0
+
+$ python.exe train_retention_risk_model.py
+Loading workforce data...
+Saved 5,000 employee risk scores to hr_enterprise.db:workforce_predictions.
+exit_code=0
+
+Skipped optional build_exit_interview_vector_index.py in this capture because it requires OPENAI_API_KEY.
+```
+
+Metrics captured in [outputs/metrics_snapshot.txt](outputs/metrics_snapshot.txt):
+
+```text
+Total workforce: 5,000
+Average salary: $104,679
+Average tenure: 29.82 months
+
+Risk distribution:
+- High Risk: 491
+- Medium Risk: 171
+- Low Risk: 4,338
+
+High-risk employees by department:
+- Manufacturing: 370
+- Engineering: 103
+- Sales: 18
+```
+
+## Sample Data Outputs
 
 | Metric | Output |
 | --- | ---: |
@@ -40,15 +86,11 @@ The included demo database contains `5,000` synthetic employees.
 | Average salary | $104,679 |
 | Average tenure | 29.82 months |
 
-### Risk by Department
-
 | Department | High-risk employees |
 | --- | ---: |
 | Manufacturing | 370 |
 | Engineering | 103 |
 | Sales | 18 |
-
-### Example High-Risk Records
 
 | Emp_ID | Department | Tenure | Salary | Risk probability | Risk level |
 | ---: | --- | ---: | ---: | ---: | --- |
@@ -56,7 +98,7 @@ The included demo database contains `5,000` synthetic employees.
 | 1050 | Manufacturing | 20 months | $71,247 | 1.000 | High Risk |
 | 1134 | Manufacturing | 3 months | $119,481 | 1.000 | High Risk |
 
-### AI Assistant Example
+## AI Assistant Example
 
 Question:
 
@@ -82,22 +124,23 @@ Result:
 ## Architecture
 
 ```text
-Synthetic HR data
-      |
-      v
-data_generator.py  ->  attrisense_synthetic_hr.csv
-      |
-      v
-predictive_engine.py  ->  hr_enterprise.db
-      |
-      +--> dashboard.py  ->  Streamlit executive app
-      |
-      +--> ai_sql_constructor.py  ->  safe read-only NL-to-SQL
-      |
-      +--> rag_engine.py  ->  faiss_hr_index/
+generate_demo_workforce_data.py
+        |
+        v
+attrisense_synthetic_hr.csv
+        |
+        v
+train_retention_risk_model.py
+        |
+        v
+hr_enterprise.db:workforce_predictions
+        |
+        +--> streamlit_app.py
+        +--> natural_language_sql.py
+        +--> build_exit_interview_vector_index.py
 ```
 
-The project intentionally stays small: one shared config module, clear pipeline stages, and a Streamlit app that reads from SQLite.
+The project stays intentionally small: one shared config file, clear pipeline stages, generated proof assets, and a Streamlit app that reads from SQLite.
 
 ## Quick Start
 
@@ -109,7 +152,7 @@ python -m venv attrisense_env
 attrisense_env\Scripts\activate
 
 pip install -r requirements.txt
-python run_attrisense.py
+python launch_streamlit_app.py
 ```
 
 Open:
@@ -118,73 +161,82 @@ Open:
 http://localhost:8501
 ```
 
-By default, `run_attrisense.py` binds Streamlit to `0.0.0.0:8501`.
+By default, `launch_streamlit_app.py` binds Streamlit to `0.0.0.0:8501`.
+
+## Rebuild the Demo Pipeline
+
+```bash
+python generate_demo_workforce_data.py
+python train_retention_risk_model.py
+python create_readme_assets.py
+python launch_streamlit_app.py
+```
+
+Optional vector index:
+
+```bash
+python build_exit_interview_vector_index.py
+```
+
+`build_exit_interview_vector_index.py` requires `OPENAI_API_KEY`. The dashboard and model do not.
 
 ## Optional AI Setup
 
-The dashboard works without an OpenAI key for analytics and charts. The AI Assistant and FAISS index builder require an API key.
+The dashboard charts work without an OpenAI key. The AI Assistant and vector index builder require credentials.
 
 ```bash
 copy .env.example .env
 ```
 
-Then set:
+Set:
 
 ```text
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-## Rebuild the Demo Pipeline
-
-Run these commands when you want to regenerate the synthetic dataset and model outputs:
-
-```bash
-python data_generator.py
-python predictive_engine.py
-python rag_engine.py
-python run_attrisense.py
-```
-
-`rag_engine.py` requires `OPENAI_API_KEY`. The dashboard and predictive model do not.
-
 ## Project Structure
 
 ```text
 AttriSense/
-├── project_config.py            # Shared paths and pipeline constants
-├── data_generator.py            # Synthetic workforce data generator
-├── predictive_engine.py         # Flight-risk model and SQLite publisher
-├── rag_engine.py                # FAISS index builder for exit interviews
-├── ai_sql_constructor.py        # Safe natural-language to SQL helper
-├── dashboard.py                 # Streamlit product dashboard
-├── run_attrisense.py            # Public Streamlit launcher
-├── attrisense_synthetic_hr.csv  # Demo dataset
-├── hr_enterprise.db             # Demo prediction database
-├── faiss_hr_index/              # Demo vector index
-├── .streamlit/config.toml       # Streamlit runtime config
-├── .env.example                 # Environment variable template
-└── requirements.txt             # Python dependencies
+|-- config.py                              # Shared paths, table name, risk thresholds
+|-- generate_demo_workforce_data.py         # Creates synthetic HR demo data
+|-- train_retention_risk_model.py           # Trains model and writes SQLite predictions
+|-- build_exit_interview_vector_index.py    # Optional FAISS index builder
+|-- natural_language_sql.py                 # Guarded natural-language to SQL helper
+|-- streamlit_app.py                        # Streamlit dashboard
+|-- launch_streamlit_app.py                 # Public Streamlit launcher
+|-- create_readme_assets.py                 # Generates README PNGs and output captures
+|-- assets/                                 # README-ready generated PNGs
+|-- outputs/                                # Captured command and metric outputs
+|-- attrisense_synthetic_hr.csv             # Demo dataset
+|-- hr_enterprise.db                        # Demo prediction database
+|-- faiss_hr_index/                         # Demo vector index
+|-- .streamlit/config.toml                  # Streamlit runtime config
+|-- .env.example                            # Environment variable template
+`-- requirements.txt                        # Python dependencies
 ```
 
 ## How to Read the Code
 
 Start here if you are new to the repo:
 
-1. `project_config.py` defines the shared filenames and risk thresholds.
-2. `data_generator.py` creates safe synthetic employee data.
-3. `predictive_engine.py` trains the model and writes predictions into SQLite.
-4. `dashboard.py` loads SQLite data and renders the Streamlit product.
-5. `ai_sql_constructor.py` powers the optional AI Assistant with read-only SQL guardrails.
-6. `run_attrisense.py` is the single command-line launcher.
+1. `config.py` defines shared filenames, table names, and risk thresholds.
+2. `generate_demo_workforce_data.py` creates safe synthetic employee data.
+3. `train_retention_risk_model.py` trains the model and writes predictions into SQLite.
+4. `streamlit_app.py` loads SQLite data and renders the product dashboard.
+5. `natural_language_sql.py` powers the optional AI Assistant with read-only SQL guardrails.
+6. `create_readme_assets.py` regenerates the README images and output proof.
+7. `launch_streamlit_app.py` is the single command-line app launcher.
 
-Every root Python function includes a docstring, and the more complex logic has inline comments so a beginner can follow the flow without guessing.
+Every root Python function has a docstring, and complex logic includes beginner-friendly inline comments.
 
 ## Production Notes
 
 - `.env` is ignored and should never be committed.
-- The included data is synthetic and safe for demos.
+- The included records are synthetic and safe for demos.
 - The AI SQL path validates generated SQL and only runs read-only queries.
-- SQLite is used for simplicity; the same table contract can move to Postgres, Snowflake, or BigQuery.
+- SQLite is used for local simplicity; the same table contract can move to Postgres, Snowflake, or BigQuery.
+- Generated README assets live in `assets/`; run logs and metrics live in `outputs/`.
 - The model is intentionally interpretable and easy to replace with richer HR features.
 
 ## Roadmap

@@ -38,6 +38,8 @@ Thumbs.db
 # Documentation images (PNGs)
 doc/*.png
 *.png
+!assets/
+!assets/*.png
 
 # Streamlit
 .streamlit/*

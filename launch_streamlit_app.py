@@ -6,7 +6,7 @@ import argparse
 import subprocess
 import sys
 
-from project_config import DASHBOARD_PATH, DATABASE_PATH, ROOT_DIR
+from config import DASHBOARD_PATH, DATABASE_PATH, ROOT_DIR
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,7 +40,7 @@ def main() -> int:
     if not DATABASE_PATH.exists():
         print(
             f"Warning: {DATABASE_PATH.name} was not found. "
-            "Run `python predictive_engine.py` if the dashboard has no data.",
+            "Run `python train_retention_risk_model.py` if the dashboard has no data.",
             file=sys.stderr,
         )
 

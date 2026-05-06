@@ -7,7 +7,7 @@ AttriSense is designed to be understandable first and impressive second. The pro
 ## Architecture Principles
 
 - Keep each pipeline stage small and executable.
-- Store shared paths and constants in `project_config.py`.
+- Store shared paths and constants in `config.py`.
 - Use synthetic data by default so the project is safe to demo.
 - Prefer SQLite for local reproducibility.
 - Keep AI features optional so the dashboard still runs without credentials.

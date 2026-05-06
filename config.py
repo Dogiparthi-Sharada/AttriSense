@@ -16,7 +16,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 DATASET_PATH = ROOT_DIR / "attrisense_synthetic_hr.csv"
 DATABASE_PATH = ROOT_DIR / "hr_enterprise.db"
 FAISS_INDEX_DIR = ROOT_DIR / "faiss_hr_index"
-DASHBOARD_PATH = ROOT_DIR / "dashboard.py"
+DASHBOARD_PATH = ROOT_DIR / "streamlit_app.py"
 
 # The dashboard and AI assistant both read from this SQLite table.
 SQL_TABLE_NAME = "workforce_predictions"

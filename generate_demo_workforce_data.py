@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from project_config import DATASET_PATH, RANDOM_SEED
+from config import DATASET_PATH, RANDOM_SEED
 
 
 EMPLOYEE_COUNT = 5_000

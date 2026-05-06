@@ -10,7 +10,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 
-from project_config import DATASET_PATH, FAISS_INDEX_DIR
+from config import DATASET_PATH, FAISS_INDEX_DIR
 
 
 def load_exit_interviews() -> list[str]:
@@ -21,7 +21,7 @@ def load_exit_interviews() -> list[str]:
     """
     if not DATASET_PATH.exists():
         raise FileNotFoundError(
-            f"Missing {DATASET_PATH.name}. Run `python data_generator.py` first."
+            f"Missing {DATASET_PATH.name}. Run `python generate_demo_workforce_data.py` first."
         )
 
     df = pd.read_csv(DATASET_PATH)

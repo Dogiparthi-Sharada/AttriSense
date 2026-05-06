@@ -4,11 +4,11 @@
 
 AttriSense now has a clean, maintainable app surface:
 
-- `project_config.py` centralizes paths and constants.
-- `run_attrisense.py` starts Streamlit on a public bind address.
-- `dashboard.py` provides executive KPIs, drilldowns, and AI querying.
-- `ai_sql_constructor.py` validates read-only SQL before execution.
-- `data_generator.py`, `predictive_engine.py`, and `rag_engine.py` have clear `main()` entry points.
+- `config.py` centralizes paths and constants.
+- `launch_streamlit_app.py` starts Streamlit on a public bind address.
+- `streamlit_app.py` provides executive KPIs, drilldowns, and AI querying.
+- `natural_language_sql.py` validates read-only SQL before execution.
+- `generate_demo_workforce_data.py`, `train_retention_risk_model.py`, and `build_exit_interview_vector_index.py` have clear `main()` entry points.
 - `.env.example` replaces tracked secrets.
 - Bundled portable Git binaries are no longer tracked.
 

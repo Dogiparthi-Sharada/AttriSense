@@ -9,8 +9,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from ai_sql_constructor import query_database_with_ai
-from project_config import DATABASE_PATH, SQL_TABLE_NAME
+from natural_language_sql import query_database_with_ai
+from config import DATABASE_PATH, SQL_TABLE_NAME
 
 
 RISK_COLORS = {
@@ -53,7 +53,7 @@ def load_predictions() -> pd.DataFrame:
     """
     if not DATABASE_PATH.exists():
         raise FileNotFoundError(
-            f"{DATABASE_PATH.name} is missing. Run `python predictive_engine.py` first."
+            f"{DATABASE_PATH.name} is missing. Run `python train_retention_risk_model.py` first."
         )
 
     with sqlite3.connect(DATABASE_PATH) as conn:

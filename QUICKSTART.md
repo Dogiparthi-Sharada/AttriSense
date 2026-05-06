@@ -34,7 +34,7 @@ pip install -r requirements.txt
 ## 4. Run the Dashboard
 
 ```bash
-python run_attrisense.py
+python launch_streamlit_app.py
 ```
 
 Open `http://localhost:8501`.
@@ -56,18 +56,18 @@ OPENAI_API_KEY=your_openai_api_key_here
 ## 6. Rebuild Data and Model
 
 ```bash
-python data_generator.py
-python predictive_engine.py
-python rag_engine.py
+python generate_demo_workforce_data.py
+python train_retention_risk_model.py
+python build_exit_interview_vector_index.py
 ```
 
-`rag_engine.py` requires `OPENAI_API_KEY`.
+`build_exit_interview_vector_index.py` requires `OPENAI_API_KEY`.
 
 ## Troubleshooting
 
 | Issue | Fix |
 | --- | --- |
-| Missing database | Run `python predictive_engine.py`. |
-| Missing dataset | Run `python data_generator.py`. |
+| Missing database | Run `python train_retention_risk_model.py`. |
+| Missing dataset | Run `python generate_demo_workforce_data.py`. |
 | AI Assistant reports missing key | Add `OPENAI_API_KEY` to `.env`. |
-| Port already in use | Run `python run_attrisense.py --port 8502`. |
+| Port already in use | Run `python launch_streamlit_app.py --port 8502`. |

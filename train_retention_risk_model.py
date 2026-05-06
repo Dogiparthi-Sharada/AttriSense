@@ -8,7 +8,7 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
 
-from project_config import DATABASE_PATH, DATASET_PATH, RANDOM_SEED, RISK_THRESHOLDS, SQL_TABLE_NAME
+from config import DATABASE_PATH, DATASET_PATH, RANDOM_SEED, RISK_THRESHOLDS, SQL_TABLE_NAME
 
 
 FEATURE_COLUMNS = ["Tenure_Months", "Base_Salary", "Dept_Code"]
@@ -34,7 +34,7 @@ def load_dataset() -> pd.DataFrame:
     """Load the synthetic workforce CSV and explain how to create it if missing."""
     if not DATASET_PATH.exists():
         raise FileNotFoundError(
-            f"Missing {DATASET_PATH.name}. Run `python data_generator.py` first."
+            f"Missing {DATASET_PATH.name}. Run `python generate_demo_workforce_data.py` first."
         )
     return pd.read_csv(DATASET_PATH)
 
@@ -43,7 +43,7 @@ def build_predictions(df: pd.DataFrame) -> pd.DataFrame:
     """Train a model and add flight-risk predictions to each employee row.
 
     Args:
-        df: Raw workforce dataset from `data_generator.py`.
+        df: Raw workforce dataset from `generate_demo_workforce_data.py`.
 
     Returns:
         The original rows with `Flight_Risk_Probability` and `Risk_Level` added.

@@ -5,15 +5,18 @@ This folder is reserved for generated architecture and product diagrams.
 Generate updated diagrams with:
 
 ```bash
-python generate_diagrams.py
+python create_readme_assets.py
 ```
 
 Expected outputs:
 
 ```text
-doc/architecture_diagram.png
-doc/execution_flow.png
-doc/technology_stack.png
+assets/product_overview.png
+assets/risk_distribution.png
+assets/high_risk_by_department.png
+assets/architecture.png
+outputs/pipeline_run.txt
+outputs/metrics_snapshot.txt
 ```
 
-The PNG files are generated artifacts and are ignored by Git by default.
+The generated README PNGs and output captures are committed so the public repository shows real evidence from the runnable code.
