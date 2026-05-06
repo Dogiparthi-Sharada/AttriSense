@@ -6,8 +6,241 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from config import DATABASE_PATH, SQL_TABLE_NAME
+from config import DATABASE_PATH, SHAP_FEATURE_TABLE_NAME, SQL_TABLE_NAME
 from natural_language_sql import query_database_with_ai
+
+
+SHAP_COLUMNS = [
+    "SHAP_Tenure_Impact",
+    "SHAP_Compensation_Impact",
+    "SHAP_Department_Impact",
+]
+SHAP_DRIVER_LABELS = {
+    "SHAP_Tenure_Impact": "Tenure",
+    "SHAP_Compensation_Impact": "Compensation",
+    "SHAP_Department_Impact": "Department",
+}
+
+
+def load_optional_table(connection: sqlite3.Connection, table_name: str) -> pd.DataFrame:
+    """Load an optional SQLite table without crashing when it is not present."""
+    table_exists = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone()
+    if not table_exists:
+        return pd.DataFrame()
+    return pd.read_sql_query(f"SELECT * FROM {table_name}", connection)
+
+
+def format_currency(value: float) -> str:
+    """Format large business values as whole-dollar strings."""
+    return f"${value:,.0f}"
+
+
+def has_shap_outputs(df: pd.DataFrame, feature_impact: pd.DataFrame) -> bool:
+    """Return whether the database has the SHAP columns needed by the dashboard."""
+    required_columns = set(SHAP_COLUMNS + ["SHAP_Explained", "Primary_Risk_Driver"])
+    return required_columns.issubset(df.columns) and not feature_impact.empty
+
+
+def build_employee_shap_frame(employee: pd.Series) -> pd.DataFrame:
+    """Turn one employee row into a SHAP contribution table for plotting."""
+    rows = []
+    for column in SHAP_COLUMNS:
+        impact = float(employee[column])
+        rows.append(
+            {
+                "Driver": SHAP_DRIVER_LABELS[column],
+                "SHAP Impact": impact,
+                "Direction": "Increases risk" if impact >= 0 else "Reduces risk",
+            }
+        )
+    return pd.DataFrame(rows).sort_values("SHAP Impact")
+
+
+def render_enterprise_upgrade_path() -> None:
+    """Show how SHAP turns the demo into a larger enterprise product concept."""
+    st.markdown("#### Enterprise Upgrade Path")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                (
+                    "Explainable risk scoring",
+                    "Every high-risk score has a named driver, making HR decisions auditable.",
+                    "Builds executive trust and supports responsible AI review.",
+                ),
+                (
+                    "Targeted retention playbooks",
+                    "Tenure, compensation, and department drivers map to different interventions.",
+                    "Reduces wasted spend on generic retention programs.",
+                ),
+                (
+                    "Workforce exposure modeling",
+                    "Salary-weighted risk converts attrition probability into financial exposure.",
+                    "Turns HR analytics into CFO-readable business impact.",
+                ),
+                (
+                    "Manager action queue",
+                    "Top-risk employees can become prioritized coaching and retention tasks.",
+                    "Creates a path from analytics to recurring enterprise workflow.",
+                ),
+            ],
+            columns=["Product Layer", "What it adds", "Why it matters"],
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def render_shap_explainability(
+    df: pd.DataFrame,
+    feature_impact: pd.DataFrame,
+) -> None:
+    """Render SHAP model explanations and business insight for executives."""
+    st.markdown("### SHAP Explainability Center")
+    st.markdown(
+        "Positive SHAP values push an employee toward higher flight risk; negative values reduce the risk score."
+    )
+
+    if not has_shap_outputs(df, feature_impact):
+        st.warning(
+            "SHAP outputs are not available yet. Run `python train_retention_risk_model.py` "
+            "to regenerate the database with explainability columns."
+        )
+        return
+
+    explained_df = df[df["SHAP_Explained"].astype(bool)].copy()
+    high_risk_df = df[df["Risk_Level"] == "High Risk"].copy()
+    explained_high_risk = high_risk_df[high_risk_df["SHAP_Explained"].astype(bool)]
+    estimated_salary_exposure = (
+        high_risk_df["Base_Salary"] * high_risk_df["Flight_Risk_Probability"] * 0.5
+    ).sum()
+    top_global_driver = feature_impact.sort_values("Mean_ABS_SHAP", ascending=False).iloc[0]
+
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4, gap="medium")
+    kpi1.metric("Employees with SHAP", f"{len(explained_df):,}", "high-risk-first sample")
+    kpi2.metric("High-risk explained", f"{len(explained_high_risk):,}", "100% of high-risk group")
+    kpi3.metric("Top global driver", top_global_driver["Feature"])
+    kpi4.metric("Salary exposure", format_currency(estimated_salary_exposure), "demo estimate")
+
+    st.divider()
+    st.markdown("#### Global Risk Drivers")
+    global_driver_chart = px.bar(
+        feature_impact.sort_values("Mean_ABS_SHAP"),
+        x="Mean_ABS_SHAP",
+        y="Feature",
+        orientation="h",
+        text="Mean_ABS_SHAP",
+        color="Feature",
+        title="Mean absolute SHAP impact by feature",
+    )
+    global_driver_chart.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+    global_driver_chart.update_layout(height=360, showlegend=False, xaxis_title="Average absolute risk impact")
+    st.plotly_chart(global_driver_chart, width="stretch")
+
+    st.dataframe(
+        feature_impact[
+            [
+                "Feature",
+                "Mean_ABS_SHAP",
+                "Average_SHAP",
+                "Explained_Employee_Count",
+                "Business_Insight",
+            ]
+        ].style.format(
+            {
+                "Mean_ABS_SHAP": "{:.4f}",
+                "Average_SHAP": "{:+.4f}",
+                "Explained_Employee_Count": "{:,.0f}",
+            }
+        ),
+        width="stretch",
+    )
+
+    st.divider()
+    st.markdown("#### Board-Level Insights")
+    insight_col1, insight_col2, insight_col3 = st.columns(3)
+    dominant_driver = explained_high_risk["Primary_Risk_Driver"].value_counts().idxmax()
+    dominant_driver_count = explained_high_risk["Primary_Risk_Driver"].value_counts().max()
+    insight_col1.info(
+        f"**{dominant_driver}** is the primary driver for {dominant_driver_count:,} high-risk employees."
+    )
+    insight_col2.warning(
+        f"The salary-weighted exposure estimate is **{format_currency(estimated_salary_exposure)}** in this demo scenario."
+    )
+    insight_col3.success(
+        "Every high-risk employee now has an explainable top driver for targeted retention action."
+    )
+
+    department_driver_summary = (
+        explained_df.groupby("Department")[SHAP_COLUMNS]
+        .mean()
+        .reset_index()
+        .melt(id_vars="Department", var_name="Driver", value_name="Average SHAP Impact")
+    )
+    department_driver_summary["Driver"] = department_driver_summary["Driver"].map(SHAP_DRIVER_LABELS)
+    department_chart = px.bar(
+        department_driver_summary,
+        x="Department",
+        y="Average SHAP Impact",
+        color="Driver",
+        barmode="group",
+        title="Average SHAP impact by department",
+    )
+    department_chart.add_hline(y=0, line_width=1, line_dash="dash", line_color="#64748b")
+    department_chart.update_layout(height=430)
+    st.plotly_chart(department_chart, width="stretch")
+
+    st.divider()
+    st.markdown("#### Individual High-Risk Explanation")
+    employee_options = explained_high_risk.sort_values(
+        "Flight_Risk_Probability",
+        ascending=False,
+    ).head(200)
+    employee_labels = employee_options.apply(
+        lambda row: (
+            f"{int(row['Emp_ID'])} | {row['Department']} | "
+            f"{row['Flight_Risk_Probability']:.1%} risk | {row['Primary_Risk_Driver']}"
+        ),
+        axis=1,
+    )
+    selected_label = st.selectbox("Select high-risk employee", employee_labels)
+    selected_employee_id = int(selected_label.split(" | ")[0])
+    selected_employee = employee_options[employee_options["Emp_ID"] == selected_employee_id].iloc[0]
+    employee_shap = build_employee_shap_frame(selected_employee)
+
+    employee_col1, employee_col2 = st.columns([1, 2], gap="large")
+    with employee_col1:
+        st.metric("Employee", int(selected_employee["Emp_ID"]))
+        st.metric("Risk probability", f"{selected_employee['Flight_Risk_Probability']:.1%}")
+        st.metric("Primary driver", selected_employee["Primary_Risk_Driver"])
+        st.metric("Direction", selected_employee["Primary_Driver_Direction"])
+
+    with employee_col2:
+        employee_chart = px.bar(
+            employee_shap,
+            x="SHAP Impact",
+            y="Driver",
+            orientation="h",
+            color="Direction",
+            color_discrete_map={
+                "Increases risk": "#d64550",
+                "Reduces risk": "#1f9d75",
+            },
+            title="Employee-level SHAP contribution",
+        )
+        employee_chart.add_vline(x=0, line_width=1, line_dash="dash", line_color="#64748b")
+        employee_chart.update_layout(height=320)
+        st.plotly_chart(employee_chart, width="stretch")
+
+    st.dataframe(
+        employee_shap.style.format({"SHAP Impact": "{:+.4f}"}),
+        width="stretch",
+        hide_index=True,
+    )
+
+    render_enterprise_upgrade_path()
 
 # ============= ENHANCED UI CONFIGURATION =============
 st.set_page_config(
@@ -70,6 +303,7 @@ st.divider()
 # ============= LOAD DATA =============
 conn = sqlite3.connect(DATABASE_PATH)
 df = pd.read_sql_query(f"SELECT * FROM {SQL_TABLE_NAME}", conn)
+shap_feature_impact = load_optional_table(conn, SHAP_FEATURE_TABLE_NAME)
 
 # Calculate key metrics
 total_employees = len(df)
@@ -79,8 +313,8 @@ low_risk_count = len(df[df["Risk_Level"] == "Low Risk"])
 high_risk_pct = high_risk_count / total_employees * 100
 
 # ============= TABS =============
-tab1, tab2, tab3 = st.tabs(
-    ["📊 Executive Dashboard", "🔍 Detailed Analytics", "🤖 AI Assistant"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["📊 Executive Dashboard", "🔍 Detailed Analytics", "🤖 AI Assistant", "SHAP Insights"]
 )
 
 # ============ TAB 1: EXECUTIVE DASHBOARD ============
@@ -535,5 +769,10 @@ with tab3:
                         st.error(result)
         else:
             st.warning("⚠️ Please enter a question first!")
+
+
+# ============ TAB 4: SHAP EXPLAINABILITY ============
+with tab4:
+    render_shap_explainability(df, shap_feature_impact)
 
 conn.close()

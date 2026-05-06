@@ -23,6 +23,7 @@ The current dataset is synthetic, so the project is safe to run, demo, publish, 
 | --- | --- |
 | Executive dashboard | Gives leaders a fast read on total workforce, risk bands, department concentration, and intervention priorities. |
 | Retention-risk model | Uses Random Forest plus SMOTE to learn rare turnover patterns and score each employee. |
+| SHAP explainability | Explains high-risk employee scores with primary risk drivers and global feature impact. |
 | Natural-language SQL | Converts plain-English HR questions into guarded, read-only SQLite queries. |
 | Exit-interview vector index | Builds a FAISS index for semantic analysis of synthetic exit interview notes. |
 | Public Streamlit launcher | Runs the app on `0.0.0.0` so it can be exposed from a VM, server, tunnel, or deployment platform. |
@@ -40,6 +41,7 @@ The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outp
 | `assets/salaryAnalytics.png` | Compensation distribution by department and risk level with average salary, median salary, and salary range KPIs. |
 | `assets/departmentComparison.png` | Department-level comparison table for employee count, average risk, salary, and tenure. |
 | `assets/aiAssistant.png` | Natural-language AI assistant with example workforce questions and SQL execution workflow. |
+| `assets/shapInsightsDashboard.png` | SHAP explainability center with global drivers, board-level insights, and employee-level risk explanations. |
 
 ![Executive dashboard](assets/executiveDashboard.png)
 
@@ -52,6 +54,8 @@ The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outp
 ![Department comparison](assets/departmentComparison.png)
 
 ![AI assistant](assets/aiAssistant.png)
+
+![SHAP insights dashboard](assets/shapInsightsDashboard.png)
 
 ## Visual Outputs
 
@@ -78,6 +82,7 @@ exit_code=0
 $ python.exe train_retention_risk_model.py
 Loading workforce data...
 Saved 5,000 employee risk scores to hr_enterprise.db:workforce_predictions.
+Saved SHAP feature impact to hr_enterprise.db:shap_feature_impact and outputs/shapInsights.txt.
 exit_code=0
 
 Skipped optional build_exit_interview_vector_index.py in this capture because it requires OPENAI_API_KEY.
@@ -146,6 +151,26 @@ Result:
 ```text
 370
 ```
+
+## SHAP Explainability
+
+AttriSense now includes a dedicated `SHAP Insights` dashboard tab. The model explains all high-risk employees first, then adds a risk-weighted representative sample so the global driver story stays fast to regenerate locally.
+
+The SHAP output is written into SQLite and summarized in [outputs/shapInsights.txt](outputs/shapInsights.txt):
+
+```text
+Global model drivers by mean absolute SHAP value:
+- Tenure: 0.1666
+- Compensation: 0.1345
+- Department: 0.0787
+
+Primary drivers among high-risk employees:
+- Tenure: 295 employees
+- Compensation: 139 employees
+- Department: 57 employees
+```
+
+This is the enterprise-grade layer: leaders can see which workforce levers are driving risk, HR can explain individual high-risk scores, and Finance gets a salary-weighted exposure estimate instead of only a model probability.
 
 ## Architecture
 
@@ -267,11 +292,12 @@ Every root Python function has a docstring, and complex logic includes beginner-
 
 ## Roadmap
 
-- Add model evaluation reports and feature importance export.
-- Add SHAP explanations for individual high-risk employees.
+- Add model evaluation reports and CI quality gates.
+- Add prescriptive retention playbooks connected to SHAP primary drivers.
+- Add salary-weighted exposure forecasting by department and manager group.
 - Add role-based access for HR partners and executives.
 - Add deployment manifests for Streamlit Community Cloud and container platforms.
-- Add CI checks for formatting, linting, and pipeline smoke tests.
+- Add automated dashboard screenshot refresh for README assets.
 
 ## License and Data
 

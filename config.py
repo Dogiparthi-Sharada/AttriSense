@@ -17,9 +17,12 @@ DATASET_PATH = ROOT_DIR / "attrisense_synthetic_hr.csv"
 DATABASE_PATH = ROOT_DIR / "hr_enterprise.db"
 FAISS_INDEX_DIR = ROOT_DIR / "faiss_hr_index"
 DASHBOARD_PATH = ROOT_DIR / "streamlit_app.py"
+OUTPUTS_DIR = ROOT_DIR / "outputs"
+SHAP_INSIGHTS_PATH = OUTPUTS_DIR / "shapInsights.txt"
 
 # The dashboard and AI assistant both read from this SQLite table.
 SQL_TABLE_NAME = "workforce_predictions"
+SHAP_FEATURE_TABLE_NAME = "shap_feature_impact"
 
 # A fixed seed keeps demo outputs reproducible across machines.
 RANDOM_SEED = 42
