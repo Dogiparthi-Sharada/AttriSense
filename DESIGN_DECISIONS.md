@@ -1,194 +1,69 @@
-# AttriSense - Design Decision Document
+# AttriSense Design Decisions
 
-## Project Overview
-This document outlines the architectural and design decisions made for AttriSense, a comprehensive workforce analytics platform combining predictive modeling, natural language querying, and interactive visualization.
+## Product Goal
 
-## Core Requirements
-- **Predictive Analytics**: Identify employees at risk of voluntary turnover
-- **Natural Language Interface**: Allow HR users to query data without SQL knowledge
-- **Interactive Dashboard**: Provide intuitive visualization of workforce insights
-- **Scalable Data Pipeline**: Handle synthetic data generation to real HR data integration
-- **Cost-Effective AI**: Use efficient models for production deployment
+AttriSense is designed to be understandable first and impressive second. The project demonstrates a production-shaped workforce intelligence system without hiding the logic behind unnecessary infrastructure.
 
-## Technology Stack Decisions
+## Architecture Principles
 
-### Programming Language: Python
-**Decision**: Python as the primary language
-**Rationale**:
-- Rich ecosystem for data science and machine learning
-- Excellent libraries for AI/ML (scikit-learn, LangChain, OpenAI)
-- Streamlit for rapid web app development
-- Strong community support for HR analytics use cases
+- Keep each pipeline stage small and executable.
+- Store shared paths and constants in `project_config.py`.
+- Use synthetic data by default so the project is safe to demo.
+- Prefer SQLite for local reproducibility.
+- Keep AI features optional so the dashboard still runs without credentials.
+- Validate model and AI outputs before exposing them to users.
 
-### Data Storage: SQLite
-**Decision**: SQLite for the primary database
-**Rationale**:
-- Zero-configuration, file-based database
-- Sufficient for enterprise-scale HR data (thousands to millions of records)
-- Native Python support via sqlite3
-- Easy backup and deployment
-- SQL standard compliance for complex queries
+## Data Layer
 
-### Machine Learning: Random Forest + SMOTE
-**Decision**: RandomForestClassifier with SMOTE oversampling
-**Rationale**:
-- **Random Forest**: Robust, interpretable, handles mixed data types well
-- **SMOTE**: Addresses class imbalance in turnover data (typically <10% positive cases)
-- Better performance than logistic regression for non-linear relationships
-- Feature importance analysis for HR insights
+SQLite is used as the application database because it is portable, transparent, and easy to inspect. The main table is:
 
-### AI Framework: LangChain + OpenAI GPT-3.5-turbo
-**Decision**: LangChain for orchestration, GPT-3.5-turbo for text generation
-**Rationale**:
-- **LangChain**: Mature framework for LLM applications, SQL chain templates
-- **GPT-3.5-turbo**: Cost-effective balance of performance and price
-- Temperature=0 for deterministic SQL generation
-- Structured prompting prevents hallucination
+```text
+workforce_predictions
+```
 
-### Vector Database: FAISS
-**Decision**: Facebook AI Similarity Search (FAISS) for RAG
-**Rationale**:
-- High-performance vector similarity search
-- CPU-based (faiss-cpu) for easy deployment
-- Integrates well with LangChain embeddings
-- Local storage avoids cloud dependency
+The table can later be migrated to Postgres, Snowflake, BigQuery, or a governed HR warehouse without changing the dashboard contract.
 
-### Web Framework: Streamlit
-**Decision**: Streamlit for the dashboard
-**Rationale**:
-- Python-native, no HTML/CSS/JS required
-- Rapid prototyping and deployment
-- Built-in components for data visualization
-- Excellent for data science applications
+## Modeling Layer
 
-## Data Pipeline Architecture
+The predictive model uses:
 
-### Synthetic Data Generation
-**Decision**: Custom Python script with numpy.random
-**Rationale**:
-- Reproducible with fixed random seed
-- Business logic injection (e.g., Manufacturing turnover rates)
-- Easy modification for different scenarios
-- No external data dependencies for demos
+- Random Forest for non-linear risk patterns.
+- SMOTE to balance rare turnover events.
+- Simple features: tenure, salary, and department.
 
-### Feature Engineering Approach
-**Decision**: Minimal features (Tenure, Salary, Department)
-**Rationale**:
-- Focus on actionable, interpretable features
-- Department encoding via categorical codes
-- Avoid overfitting with too many features
-- Easy to extend with additional HR metrics
+The feature set is intentionally modest. That makes the demo easy to audit and creates a clean path for production enhancements such as manager changes, performance signals, commute distance, engagement scores, and compensation movement.
 
-### Risk Categorization
-**Decision**: Probability thresholds (0.75 High, 0.40 Medium)
-**Rationale**:
-- Business-aligned risk levels
-- Allows for different intervention strategies
-- Intuitive for HR stakeholders
-- Adjustable based on organizational tolerance
+## AI Layer
 
-## Security and Privacy Considerations
+The natural-language assistant uses LangChain and OpenAI to generate SQL. It includes guardrails:
 
-### API Key Management
-**Decision**: Environment variables via python-dotenv
-**Rationale**:
-- Keeps sensitive keys out of source code
-- Supports different environments (dev/prod)
-- Industry standard practice
-- Easy rotation and management
+- Only `SELECT` and `WITH` queries are allowed.
+- Mutating SQL operations are blocked.
+- SQLite is placed in query-only mode before execution.
+- Missing API keys produce clear user-facing messages.
 
-### Data Privacy
-**Decision**: Synthetic data for development
-**Rationale**:
-- No real employee data exposure
-- Demonstrates system capabilities safely
-- Easy to replace with real data pipelines
-- Compliance with privacy regulations
+This keeps the assistant useful for demos while protecting the database from accidental write operations.
 
-## Performance Optimizations
+## RAG Layer
 
-### Model Training
-**Decision**: Batch training with SMOTE preprocessing
-**Rationale**:
-- Handles imbalanced data effectively
-- One-time training for prediction serving
-- Fast inference for real-time dashboards
+FAISS stores embeddings for synthetic exit interview notes. The current implementation is local and simple; a production version could add metadata filters, chunk provenance, access control, and scheduled rebuilds.
 
-### SQL Query Limits
-**Decision**: Top-k limiting in prompts
-**Rationale**:
-- Prevents excessive database load
-- Faster response times
-- User-focused result sets
+## Interface Layer
 
-### Text Chunking for RAG
-**Decision**: 150-character chunks with 20-character overlap
-**Rationale**:
-- Balances context preservation and granularity
-- Fits typical sentence/exit interview length
-- Allows semantic search without losing meaning
+Streamlit is used because it is fast, Python-native, and ideal for analytics workflows. The dashboard favors executive clarity over visual noise:
 
-## Deployment and Operations
+- KPI cards for risk bands.
+- Department risk concentration.
+- Detailed drilldowns for high-risk employees, tenure, and compensation.
+- A natural-language question box for non-technical users.
 
-### Virtual Environment
-**Decision**: venv with requirements.txt equivalent
-**Rationale**:
-- Isolated dependencies
-- Reproducible environments
-- Standard Python practice
+## Security Notes
 
-### Local Execution
-**Decision**: Desktop application architecture
-**Rationale**:
-- No cloud infrastructure required
-- Easy for HR teams to run locally
-- Faster iteration during development
-- Lower cost than cloud deployment
+- `.env` is ignored by Git.
+- `.env.example` documents required variables without exposing secrets.
+- The included records are synthetic and should never be treated as real employee data.
+- Any real deployment should add authentication, role-based access, audit logging, and approved HR data governance.
 
-## Future Extensibility
+## Why This Shape Works
 
-### Modular Architecture
-**Decision**: Separate scripts for each pipeline stage
-**Rationale**:
-- Independent execution and testing
-- Easy to modify individual components
-- Supports CI/CD pipelines
-- Clear separation of concerns
-
-### Configuration-Driven Design
-**Decision**: Hardcoded parameters with clear documentation
-**Rationale**:
-- Easy to understand and modify
-- No complex configuration files needed
-- Transparent business logic
-
-## Risk Mitigation
-
-### Error Handling
-**Decision**: Try-catch blocks with user-friendly messages
-**Rationale**:
-- Graceful failure for end users
-- Debugging information for developers
-- Prevents application crashes
-
-### Data Validation
-**Decision**: Basic data integrity checks
-**Rationale**:
-- Ensures pipeline reliability
-- Catches data quality issues early
-- Maintains system stability
-
-## Success Metrics
-
-### Technical Metrics
-- Model accuracy on holdout data
-- Query response time (<5 seconds)
-- Dashboard load time (<2 seconds)
-
-### Business Metrics
-- User adoption of NL-to-SQL interface
-- Time savings vs manual SQL queries
-- Predictive model lift over baseline
-
-## Conclusion
-This design balances technical sophistication with practical deployment constraints, creating a production-ready HR analytics system that can scale from prototype to enterprise use. The modular architecture supports future enhancements while maintaining simplicity for new developers.
+AttriSense is small enough for a recruiter, hiring manager, or engineer to understand in minutes, but complete enough to show product judgment: data generation, ML, AI, visualization, documentation, and deployment entry point all work together.

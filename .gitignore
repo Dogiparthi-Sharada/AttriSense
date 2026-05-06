@@ -1,5 +1,4 @@
 # Virtual Environment
-lumentum_env/
 attrisense_env/
 venv/
 env/
@@ -46,11 +45,16 @@ doc/*.png
 !.streamlit/config.toml
 *.cache
 
+# Local tooling
+git-portable/
+
 # Database files (if regenerating)
 hr_enterprise.db.bak
 *.db.backup
 
 # Environment variables
+.env
+!.env.example
 .env.local
 .env.*.local
 
@@ -64,7 +68,7 @@ hr_enterprise.db.bak
 *.log
 
 # Generated data (regeneratable)
-lumentum_synthetic_hr.csv.bak
+attrisense_synthetic_hr.csv.bak
 faiss_hr_index.backup/
 
 # Cache

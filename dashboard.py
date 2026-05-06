@@ -1,412 +1,381 @@
-import streamlit as st
-import pandas as pd
+"""Streamlit application for AttriSense workforce intelligence."""
+
+from __future__ import annotations
+
 import sqlite3
+
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from ai_sql_constructor import query_database_with_ai
-import numpy as np
+import streamlit as st
 
-# ============= ENHANCED UI CONFIGURATION =============
+from ai_sql_constructor import query_database_with_ai
+from project_config import DATABASE_PATH, SQL_TABLE_NAME
+
+
+RISK_COLORS = {
+    "High Risk": "#d64550",
+    "Medium Risk": "#f0a202",
+    "Low Risk": "#1f9d75",
+}
+
+
 st.set_page_config(
-    page_title="AttriSense", 
-    layout="wide", 
+    page_title="AttriSense",
+    layout="wide",
     initial_sidebar_state="expanded",
-    menu_items=None
+    menu_items=None,
 )
 
-# Custom CSS for better styling
-st.markdown("""
-<style>
-    .main {
-        padding-top: 2rem;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 12px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .insight-box {
-        background-color: #f0f4ff;
-        border-left: 4px solid #667eea;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-    }
-    .title-main {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
-    }
-    .subtitle {
-        color: #666;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
-</style>
-""", unsafe_allow_html=True)
 
-# ============= HEADER =============
-st.markdown('<div class="title-main">AttriSense Workforce Intelligence</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Intelligent Workforce Intelligence & Predictive Analytics</div>', unsafe_allow_html=True)
-st.divider()
+st.markdown(
+    """
+    <style>
+        .block-container {padding-top: 2rem; padding-bottom: 3rem;}
+        .hero-title {font-size: 2.4rem; font-weight: 750; color: #14213d;}
+        .hero-subtitle {font-size: 1.05rem; color: #4b5563; margin-bottom: 1rem;}
+        .section-note {color: #6b7280; font-size: 0.95rem;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ============= LOAD DATA =============
-conn = sqlite3.connect('hr_enterprise.db')
-df = pd.read_sql_query("SELECT * FROM workforce_predictions", conn)
 
-# Calculate key metrics
-total_employees = len(df)
-high_risk_count = len(df[df['Risk_Level'] == 'High Risk'])
-medium_risk_count = len(df[df['Risk_Level'] == 'Medium Risk'])
-low_risk_count = len(df[df['Risk_Level'] == 'Low Risk'])
-high_risk_pct = (high_risk_count / total_employees * 100)
+@st.cache_data(ttl=60)
+def load_predictions() -> pd.DataFrame:
+    """Load the prediction table that powers every dashboard view.
 
-# ============= TABS =============
-tab1, tab2, tab3 = st.tabs(["📊 Executive Dashboard", "🔍 Detailed Analytics", "🤖 AI Assistant"])
+    Returns:
+        A DataFrame containing employee records and model-generated risk scores.
 
-# ============ TAB 1: EXECUTIVE DASHBOARD ============
-with tab1:
-    st.markdown("### Executive Summary")
-    st.markdown("Real-time snapshot of workforce health and risk metrics")
-    
-    # Enhanced KPIs with descriptions
-    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4, gap="medium")
-    
-    with kpi_col1:
-        st.metric(
-            "👥 Total Workforce",
-            f"{total_employees:,}",
-            delta="Active Employees",
-            delta_color="off"
+    Raises:
+        FileNotFoundError: If the SQLite database has not been created yet.
+    """
+    if not DATABASE_PATH.exists():
+        raise FileNotFoundError(
+            f"{DATABASE_PATH.name} is missing. Run `python predictive_engine.py` first."
         )
-        st.markdown("_All actively tracked employees in the organization_")
-    
-    with kpi_col2:
-        st.metric(
-            "⚠️ High Flight Risk",
-            f"{high_risk_count:,}",
-            delta=f"{high_risk_pct:.1f}% of workforce",
-            delta_color="inverse"
-        )
-        st.markdown("_Employees with >75% probability of leaving_")
-    
-    with kpi_col3:
-        st.metric(
-            "⏱️ Medium Risk",
-            f"{medium_risk_count:,}",
-            delta=f"{(medium_risk_count/total_employees*100):.1f}% of workforce",
-            delta_color="off"
-        )
-        st.markdown("_Requires monitoring (40-75% risk probability)_")
-    
-    with kpi_col4:
-        st.metric(
-            "✅ Low Risk",
-            f"{low_risk_count:,}",
-            delta=f"{(low_risk_count/total_employees*100):.1f}% of workforce",
-            delta_color="normal"
-        )
-        st.markdown("_Stable employees with low turnover risk_")
-    
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        return pd.read_sql_query(f"SELECT * FROM {SQL_TABLE_NAME}", conn)
+
+
+def format_currency(value: float) -> str:
+    """Format a numeric salary value as a whole-dollar string."""
+    return f"${value:,.0f}"
+
+
+def render_header() -> None:
+    """Render the app title and one-line product positioning."""
+    st.markdown('<div class="hero-title">AttriSense</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hero-subtitle">Predictive workforce intelligence for retention, risk, and executive action.</div>',
+        unsafe_allow_html=True,
+    )
     st.divider()
-    
-    # Key Insights Section
-    st.markdown("### 📈 Key Insights")
-    
-    insight_col1, insight_col2, insight_col3 = st.columns(3)
-    
-    with insight_col1:
-        manufacturing_avg_tenure = df[df['Department'] == 'Manufacturing']['Tenure_Months'].mean()
-        st.info(f"🏭 **Manufacturing Avg Tenure**: {manufacturing_avg_tenure:.1f} months\n\nLongest-tenured department with {len(df[df['Department'] == 'Manufacturing']):,} employees")
-    
-    with insight_col2:
-        avg_salary = df['Base_Salary'].mean()
-        st.info(f"💰 **Average Salary**: ${avg_salary:,.0f}\n\nCross-organizational compensation baseline")
-    
-    with insight_col3:
-        at_risk_action = len(df[(df['Risk_Level'] == 'High Risk') & (df['Tenure_Months'] < 6)])
-        st.warning(f"🚨 **Critical Attention Needed**: {at_risk_action} employees\n\nNew hires (<6 months) at high risk of leaving")
-    
+
+
+def render_kpis(df: pd.DataFrame) -> None:
+    """Show the four executive metrics at the top of the dashboard.
+
+    Args:
+        df: Prediction DataFrame loaded from SQLite.
+    """
+    total = len(df)
+    high_risk = int((df["Risk_Level"] == "High Risk").sum())
+    medium_risk = int((df["Risk_Level"] == "Medium Risk").sum())
+    low_risk = int((df["Risk_Level"] == "Low Risk").sum())
+
+    col1, col2, col3, col4 = st.columns(4, gap="medium")
+    col1.metric("Total workforce", f"{total:,}", "active employees")
+    col2.metric("High flight risk", f"{high_risk:,}", f"{high_risk / total:.1%}")
+    col3.metric("Medium risk", f"{medium_risk:,}", f"{medium_risk / total:.1%}")
+    col4.metric("Low risk", f"{low_risk:,}", f"{low_risk / total:.1%}")
+
+
+def render_executive_dashboard(df: pd.DataFrame) -> None:
+    """Render the main executive view with KPIs, insights, and risk charts.
+
+    Args:
+        df: Prediction DataFrame loaded from SQLite.
+    """
+    st.subheader("Executive Dashboard")
+    st.markdown(
+        '<div class="section-note">A board-level view of workforce health, risk concentration, and intervention priorities.</div>',
+        unsafe_allow_html=True,
+    )
+    render_kpis(df)
     st.divider()
-    
-    # Visualizations
-    st.markdown("### 📊 Core Visualizations")
-    
-    viz_col1, viz_col2 = st.columns(2, gap="large")
-    
-    # Flight Risk Distribution (Enhanced Donut)
-    with viz_col1:
-        st.markdown("#### Flight Risk Distribution")
-        st.markdown("_Breakdown of workforce by flight risk category_")
-        
-        risk_counts = df['Risk_Level'].value_counts()
-        fig_donut = go.Figure(data=[go.Pie(
-            labels=risk_counts.index,
-            values=risk_counts.values,
-            hole=0.4,
-            marker=dict(colors=['#EF553B', '#FFA15A', '#00CC96']),
-            textposition='inside',
-            textinfo='label+percent',
-            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
-        )])
-        fig_donut.update_layout(
-            height=400,
-            showlegend=True,
-            font=dict(size=12),
-            margin=dict(l=0, r=0, t=0, b=0)
+
+    insight_col1, insight_col2, insight_col3 = st.columns(3, gap="medium")
+    manufacturing = df[df["Department"] == "Manufacturing"]
+    new_hire_high_risk = df[
+        (df["Risk_Level"] == "High Risk") & (df["Tenure_Months"] < 6)
+    ]
+
+    insight_col1.info(
+        f"Manufacturing tenure averages {manufacturing['Tenure_Months'].mean():.1f} months "
+        f"across {len(manufacturing):,} employees."
+    )
+    insight_col2.info(
+        f"Average base salary is {format_currency(df['Base_Salary'].mean())}, "
+        "useful as a compensation benchmark."
+    )
+    insight_col3.warning(
+        f"{len(new_hire_high_risk):,} early-tenure employees are already high risk."
+    )
+
+    chart_col1, chart_col2 = st.columns(2, gap="large")
+    risk_counts = df["Risk_Level"].value_counts()
+
+    with chart_col1:
+        # A donut chart gives executives the risk mix at a glance.
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=risk_counts.index,
+                    values=risk_counts.values,
+                    hole=0.45,
+                    marker={"colors": [RISK_COLORS.get(label, "#64748b") for label in risk_counts.index]},
+                    textinfo="label+percent",
+                    hovertemplate="<b>%{label}</b><br>Employees: %{value}<extra></extra>",
+                )
+            ]
         )
-        st.plotly_chart(fig_donut, width="stretch")
-    
-    # High Risk by Department (Enhanced Bar)
-    with viz_col2:
-        st.markdown("#### High Risk Employees by Department")
-        st.markdown("_Department-level risk distribution and headcount_")
-        
-        high_risk_by_dept = df[df['Risk_Level'] == 'High Risk'].groupby('Department').size().reset_index(name='Count')
-        total_by_dept = df.groupby('Department').size().reset_index(name='Total')
-        merged = high_risk_by_dept.merge(total_by_dept, on='Department')
-        merged['Percentage'] = (merged['Count'] / merged['Total'] * 100).round(1)
-        
-        fig_bar = go.Figure(data=[
+        fig.update_layout(height=390, margin={"l": 0, "r": 0, "t": 20, "b": 0})
+        st.plotly_chart(fig, width="stretch")
+
+    with chart_col2:
+        # Grouping only high-risk employees makes the operational hotspot clear.
+        high_risk_by_dept = (
+            df[df["Risk_Level"] == "High Risk"]
+            .groupby("Department", as_index=False)
+            .size()
+            .rename(columns={"size": "High_Risk_Count"})
+            .sort_values("High_Risk_Count", ascending=False)
+        )
+        fig = px.bar(
+            high_risk_by_dept,
+            x="Department",
+            y="High_Risk_Count",
+            color="Department",
+            text="High_Risk_Count",
+            title="High-risk employees by department",
+        )
+        fig.update_layout(height=390, showlegend=False, margin={"l": 0, "r": 0, "t": 45, "b": 0})
+        st.plotly_chart(fig, width="stretch")
+
+    st.subheader("Risk Profile by Department")
+    risk_by_dept = pd.crosstab(df["Department"], df["Risk_Level"])
+    # The stacked bar keeps each department in one visual row while showing all
+    # risk bands. This is easier to compare than three separate charts.
+    fig = go.Figure(
+        data=[
             go.Bar(
-                x=merged['Department'],
-                y=merged['Count'],
-                marker=dict(color=['#FF6B6B', '#4ECDC4', '#45B7D1']),
-                text=merged['Count'],
-                textposition='auto',
-                hovertemplate='<b>%{x}</b><br>High Risk: %{y}<extra></extra>'
+                name=risk,
+                x=risk_by_dept.index,
+                y=risk_by_dept.get(risk, 0),
+                marker_color=RISK_COLORS[risk],
             )
-        ])
-        fig_bar.update_layout(
-            height=400,
-            xaxis_title="Department",
-            yaxis_title="High Risk Employee Count",
-            showlegend=False,
-            margin=dict(l=0, r=0, t=0, b=0)
-        )
-        st.plotly_chart(fig_bar, width="stretch")
-    
-    st.divider()
-    
-    # Risk by Department Comparison
-    st.markdown("### 📍 Risk Profile by Department")
-    st.markdown("_Comprehensive breakdown showing all risk categories per department_")
-    
-    risk_by_dept = pd.crosstab(df['Department'], df['Risk_Level'])
-    fig_stacked = go.Figure(data=[
-        go.Bar(name='High Risk', x=risk_by_dept.index, y=risk_by_dept.get('High Risk', 0), marker_color='#EF553B'),
-        go.Bar(name='Medium Risk', x=risk_by_dept.index, y=risk_by_dept.get('Medium Risk', 0), marker_color='#FFA15A'),
-        go.Bar(name='Low Risk', x=risk_by_dept.index, y=risk_by_dept.get('Low Risk', 0), marker_color='#00CC96'),
-    ])
-    fig_stacked.update_layout(
-        barmode='stack',
+            for risk in ("High Risk", "Medium Risk", "Low Risk")
+        ]
+    )
+    fig.update_layout(
+        barmode="stack",
         xaxis_title="Department",
-        yaxis_title="Employee Count",
-        height=400,
-        hovermode='x unified'
+        yaxis_title="Employee count",
+        height=420,
+        hovermode="x unified",
     )
-    st.plotly_chart(fig_stacked, width="stretch")
+    st.plotly_chart(fig, width="stretch")
 
 
-# ============ TAB 2: DETAILED ANALYTICS ============
-with tab2:
-    st.markdown("### 🔍 Deep Dive Analysis")
-    
+def render_deep_dive(df: pd.DataFrame) -> None:
+    """Render analyst-friendly drilldowns for risk, tenure, salary, and teams.
+
+    Args:
+        df: Prediction DataFrame loaded from SQLite.
+    """
+    st.subheader("Detailed Analytics")
     analysis_type = st.selectbox(
-        "Select Analysis Type",
-        ["High Risk Employees", "Tenure Analysis", "Salary Analysis", "Department Comparison"]
+        "Analysis view",
+        ["High Risk Employees", "Tenure Analysis", "Salary Analysis", "Department Comparison"],
     )
-    
+
     if analysis_type == "High Risk Employees":
-        st.markdown("#### High-Risk Workforce - Detailed View")
-        st.markdown("_Employees with >75% probability of leaving - requires immediate retention action_")
-        
-        high_risk_df = df[df['Risk_Level'] == 'High Risk'].copy()
-        high_risk_df = high_risk_df.sort_values('Flight_Risk_Probability', ascending=False)
-        
+        # Sort highest-probability employees first because they are the most
+        # urgent candidates for retention action.
+        high_risk_df = df[df["Risk_Level"] == "High Risk"].sort_values(
+            "Flight_Risk_Probability", ascending=False
+        )
         col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("High Risk Count", len(high_risk_df))
-        with col2:
-            st.metric("Avg Risk Probability", f"{high_risk_df['Flight_Risk_Probability'].mean():.2%}")
-        with col3:
-            st.metric("Avg Tenure (Months)", f"{high_risk_df['Tenure_Months'].mean():.1f}")
-        
-        st.divider()
-        
-        # Risk distribution visualization
-        fig_risk_dist = px.histogram(
-            high_risk_df, 
-            x='Flight_Risk_Probability',
+        col1.metric("High-risk employees", f"{len(high_risk_df):,}")
+        col2.metric("Average risk probability", f"{high_risk_df['Flight_Risk_Probability'].mean():.1%}")
+        col3.metric("Average tenure", f"{high_risk_df['Tenure_Months'].mean():.1f} months")
+
+        fig = px.histogram(
+            high_risk_df,
+            x="Flight_Risk_Probability",
             nbins=20,
-            title="Distribution of Flight Risk Probability",
-            labels={'Flight_Risk_Probability': 'Risk Probability', 'count': 'Number of Employees'},
-            color_discrete_sequence=['#EF553B']
+            title="Distribution of high-risk probabilities",
+            labels={"Flight_Risk_Probability": "Risk probability"},
+            color_discrete_sequence=[RISK_COLORS["High Risk"]],
         )
-        st.plotly_chart(fig_risk_dist, width="stretch")
-        
-        st.divider()
-        st.markdown("#### Recommended Actions for High Risk Employees")
-        
-        retention_strategies = {
-            '>0.90': '🔴 CRITICAL: Immediate retention interview, salary review, promotion consideration',
-            '0.80-0.90': '🟠 HIGH: Retention bonus, career development plan, mentorship',
-            '0.75-0.80': '🟡 MEDIUM: Regular check-ins, skill development opportunities'
-        }
-        
-        for risk_range, strategy in retention_strategies.items():
-            st.markdown(f"**Risk Level {risk_range}**: {strategy}")
-        
-        st.divider()
-        st.markdown("#### High Risk Employee Details")
-        display_df = high_risk_df[['Emp_ID', 'Department', 'Tenure_Months', 'Base_Salary', 'Flight_Risk_Probability', 'Risk_Level']].head(20)
+        st.plotly_chart(fig, width="stretch")
+
+        st.markdown("#### Intervention guidance")
+        st.table(
+            pd.DataFrame(
+                [
+                    ("90%+", "Immediate retention interview, manager review, compensation check"),
+                    ("80%-90%", "Career path discussion, mentorship, workload review"),
+                    ("75%-80%", "Structured check-ins and engagement pulse follow-up"),
+                ],
+                columns=["Risk band", "Recommended action"],
+            )
+        )
+
         st.dataframe(
-            display_df.style.format({
-                'Flight_Risk_Probability': '{:.2%}',
-                'Base_Salary': '${:,.0f}',
-                'Tenure_Months': '{:.1f}'
-            }),
-            width="stretch"
+            high_risk_df[
+                [
+                    "Emp_ID",
+                    "Department",
+                    "Tenure_Months",
+                    "Base_Salary",
+                    "Flight_Risk_Probability",
+                    "Risk_Level",
+                ]
+            ]
+            .head(25)
+            .style.format(
+                {
+                    "Flight_Risk_Probability": "{:.1%}",
+                    "Base_Salary": "${:,.0f}",
+                    "Tenure_Months": "{:.0f}",
+                }
+            ),
+            width="stretch",
         )
-    
+
     elif analysis_type == "Tenure Analysis":
-        st.markdown("#### Tenure-Based Workforce Analysis")
-        st.markdown("_Understanding employment longevity and its correlation with turnover risk_")
-        
-        fig_tenure = px.scatter(
+        fig = px.scatter(
             df,
-            x='Tenure_Months',
-            y='Flight_Risk_Probability',
-            color='Risk_Level',
-            size='Base_Salary',
-            hover_data=['Department'],
-            title='Tenure vs Flight Risk Probability',
-            color_discrete_map={'High Risk': '#EF553B', 'Medium Risk': '#FFA15A', 'Low Risk': '#00CC96'},
-            labels={'Tenure_Months': 'Tenure (Months)', 'Flight_Risk_Probability': 'Flight Risk Probability'}
+            x="Tenure_Months",
+            y="Flight_Risk_Probability",
+            color="Risk_Level",
+            size="Base_Salary",
+            hover_data=["Department"],
+            color_discrete_map=RISK_COLORS,
+            title="Tenure vs. flight-risk probability",
         )
-        fig_tenure.update_layout(height=500)
-        st.plotly_chart(fig_tenure, width="stretch")
-        
-        # Tenure statistics
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Avg Tenure", f"{df['Tenure_Months'].mean():.1f} months")
-        with col2:
-            st.metric("Median Tenure", f"{df['Tenure_Months'].median():.1f} months")
-        with col3:
-            st.metric("Employees <6 Months", f"{len(df[df['Tenure_Months'] < 6]):,}")
-    
+        fig.update_layout(height=520)
+        st.plotly_chart(fig, width="stretch")
+
     elif analysis_type == "Salary Analysis":
-        st.markdown("#### Compensation & Salary Analysis")
-        st.markdown("_Salary distribution and its relationship with employee retention_")
-        
-        fig_salary = px.box(
+        fig = px.box(
             df,
-            x='Department',
-            y='Base_Salary',
-            color='Risk_Level',
-            title='Salary Distribution by Department & Risk Level',
-            color_discrete_map={'High Risk': '#EF553B', 'Medium Risk': '#FFA15A', 'Low Risk': '#00CC96'},
-            labels={'Base_Salary': 'Annual Salary ($)', 'Department': 'Department'}
+            x="Department",
+            y="Base_Salary",
+            color="Risk_Level",
+            color_discrete_map=RISK_COLORS,
+            title="Salary distribution by department and risk level",
         )
-        fig_salary.update_layout(height=500)
-        st.plotly_chart(fig_salary, width="stretch")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Avg Salary", f"${df['Base_Salary'].mean():,.0f}")
-        with col2:
-            st.metric("Median Salary", f"${df['Base_Salary'].median():,.0f}")
-        with col3:
-            st.metric("Salary Range", f"${df['Base_Salary'].max() - df['Base_Salary'].min():,.0f}")
-    
-    else:  # Department Comparison
-        st.markdown("#### Department-Level Metrics")
-        st.markdown("_Side-by-side comparison of all departments_")
-        
-        dept_stats = df.groupby('Department').agg({
-            'Emp_ID': 'count',
-            'Flight_Risk_Probability': 'mean',
-            'Base_Salary': 'mean',
-            'Tenure_Months': 'mean'
-        }).round(2)
-        dept_stats.columns = ['Total Employees', 'Avg Risk Probability', 'Avg Salary', 'Avg Tenure (Months)']
-        
+        fig.update_layout(height=520)
+        st.plotly_chart(fig, width="stretch")
+
+    else:
+        # Named aggregation keeps the output column names readable for HR users.
+        dept_stats = (
+            df.groupby("Department")
+            .agg(
+                Total_Employees=("Emp_ID", "count"),
+                Avg_Risk_Probability=("Flight_Risk_Probability", "mean"),
+                Avg_Salary=("Base_Salary", "mean"),
+                Avg_Tenure_Months=("Tenure_Months", "mean"),
+            )
+            .sort_values("Total_Employees", ascending=False)
+        )
         st.dataframe(
-            dept_stats.style.format({
-                'Avg Risk Probability': '{:.2%}',
-                'Avg Salary': '${:,.0f}',
-                'Avg Tenure (Months)': '{:.1f}'
-            }),
-            width="stretch"
+            dept_stats.style.format(
+                {
+                    "Avg_Risk_Probability": "{:.1%}",
+                    "Avg_Salary": "${:,.0f}",
+                    "Avg_Tenure_Months": "{:.1f}",
+                }
+            ),
+            width="stretch",
         )
 
 
-# ============ TAB 3: AI ASSISTANT ============
-with tab3:
-    st.markdown("### 🤖 Natural Language Data Query Assistant")
-    st.markdown("Ask questions about your workforce data in plain English. Our AI will translate them to SQL and return insights.")
-    
-    st.divider()
-    
-    # Example questions
-    st.markdown("#### 💡 Example Questions")
-    example_col1, example_col2 = st.columns(2)
-    
-    with example_col1:
-        st.caption("📌 Common Queries:")
-        st.write("• How many high risk employees are in manufacturing?")
-        st.write("• What's the average salary of employees with 12+ months tenure?")
-        st.write("• Show me all medium risk employees in engineering")
-    
-    with example_col2:
-        st.caption("📌 Advanced Queries:")
-        st.write("• Count employees earning over $100k with high flight risk")
-        st.write("• What's the average tenure in each department?")
-        st.write("• Show me the highest flight risk probability employee")
-    
-    st.divider()
-    
-    user_question = st.text_input(
-        "Ask a question about your workforce data:",
-        placeholder="e.g., How many high risk employees are in the manufacturing department?"
-    )
-    
-    if st.button("🚀 Generate SQL & Execute", width="stretch"):
-        if user_question:
-            with st.spinner("🔄 AI is analyzing your question and generating SQL..."):
-                sql_query, result = query_database_with_ai(user_question)
-                
-                if sql_query and sql_query != "None":
-                    st.success("✅ Query Executed Successfully!")
-                    
-                    col1, col2 = st.columns([1, 2])
-                    
-                    with col1:
-                        st.markdown("#### 📝 Generated SQL Query")
-                        st.code(sql_query, language='sql')
-                    
-                    with col2:
-                        st.markdown("#### 📊 Result")
-                        if isinstance(result, list) and len(result) > 0:
-                            # Format results nicely
-                            if len(result[0]) == 1:
-                                st.metric("Result", result[0][0])
-                            else:
-                                result_df = pd.DataFrame(result)
-                                st.dataframe(result_df, width="stretch")
-                        else:
-                            st.write(result)
-                else:
-                    st.error("❌ Error executing query. Please try a different question.")
-                    if result:
-                        st.error(result)
-        else:
-            st.warning("⚠️ Please enter a question first!")
+def render_ai_assistant() -> None:
+    """Render the natural-language query assistant.
 
-conn.close()
+    The assistant is optional: if `OPENAI_API_KEY` is missing, the underlying
+    helper returns a clear message instead of crashing the dashboard.
+    """
+    st.subheader("AI Data Assistant")
+    st.markdown(
+        "Ask a plain-English question. AttriSense converts it into safe read-only SQL and returns the result."
+    )
+
+    examples = [
+        "How many high risk employees are in Manufacturing?",
+        "What is the average salary of High Risk employees?",
+        "Show turnover risk counts by department.",
+    ]
+    selected_example = st.selectbox("Try an example", [""] + examples)
+    user_question = st.text_input(
+        "Question",
+        value=selected_example,
+        placeholder="Example: Show high risk employees by department",
+    )
+
+    if st.button("Generate SQL and run", width="stretch"):
+        if not user_question.strip():
+            st.warning("Enter a question first.")
+            return
+
+        with st.spinner("Generating a read-only SQL query..."):
+            sql_query, result = query_database_with_ai(user_question)
+
+        if not sql_query:
+            st.error(result)
+            return
+
+        st.success("Query executed successfully.")
+        st.code(sql_query, language="sql")
+
+        # The SQL helper always returns a dictionary when execution succeeds.
+        # Single-cell answers become KPI metrics; larger results become tables.
+        rows = result.get("rows", []) if isinstance(result, dict) else []
+        columns = result.get("columns", []) if isinstance(result, dict) else []
+        if not rows:
+            st.info("The query returned no rows.")
+        elif len(rows) == 1 and len(rows[0]) == 1:
+            st.metric("Result", rows[0][0])
+        else:
+            st.dataframe(pd.DataFrame(rows, columns=columns), width="stretch")
+
+
+def main() -> None:
+    """Load data and route users into the three dashboard tabs."""
+    render_header()
+    try:
+        df = load_predictions()
+    except Exception as exc:
+        st.error(str(exc))
+        st.stop()
+
+    tab1, tab2, tab3 = st.tabs(
+        ["Executive Dashboard", "Detailed Analytics", "AI Assistant"]
+    )
+    with tab1:
+        render_executive_dashboard(df)
+    with tab2:
+        render_deep_dive(df)
+    with tab3:
+        render_ai_assistant()
+
+
+if __name__ == "__main__":
+    main()
