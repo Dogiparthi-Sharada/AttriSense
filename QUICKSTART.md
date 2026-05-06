@@ -1,7 +1,7 @@
-# Lumentum HR AI System - Quickstart Guide
+# AttriSense - Quickstart Guide
 
 ## Overview
-This project implements an AI-powered HR analytics mock system for Lumentum, featuring predictive workforce analytics, natural language to SQL querying, and a Streamlit dashboard.
+AttriSense is an AI-powered workforce analytics platform featuring predictive workforce analytics, natural language to SQL querying, and a Streamlit dashboard.
 
 ## Prerequisites
 - Python 3.8+
@@ -11,18 +11,18 @@ This project implements an AI-powered HR analytics mock system for Lumentum, fea
 ## Installation
 
 ### 1. Clone/Download the Project
-Place the project files in a directory, e.g., `Lumentum_HR_AI/`
+Place the project files in a directory, e.g., `AttriSense/`
 
 ### 2. Set Up Virtual Environment
 ```bash
 # Create virtual environment
-python -m venv lumentum_env
+python -m venv attrisense_env
 
 # Activate (Windows)
-lumentum_env\Scripts\activate
+attrisense_env\Scripts\activate
 
 # Activate (Linux/Mac)
-source lumentum_env/bin/activate
+source attrisense_env/bin/activate
 ```
 
 ### 3. Install Dependencies
@@ -58,12 +58,12 @@ This processes exit interview text and creates FAISS vector index in `faiss_hr_i
 
 ## Running the Application
 
-### Start the Dashboard
+### Start the Dashboard Publicly
 ```bash
-streamlit run dashboard.py
+python run_attrisense.py
 ```
 
-The app will be available at `http://localhost:8501`
+The app binds to `0.0.0.0:8501` by default and will also be available locally at `http://localhost:8501`.
 
 ## Features
 
@@ -87,17 +87,18 @@ The app will be available at `http://localhost:8501`
 
 ### File Structure
 ```
-Lumentum_HR_AI/
+AttriSense/
 ├── data_generator.py          # Generates synthetic HR data
 ├── predictive_engine.py       # ML model for turnover prediction
 ├── rag_engine.py             # Vector database for exit interviews
 ├── ai_sql_constructor.py     # NL-to-SQL AI agent
 ├── dashboard.py              # Streamlit web application
+├── run_attrisense.py         # Public Streamlit launcher
 ├── lumentum_synthetic_hr.csv # Generated employee data
 ├── hr_enterprise.db          # SQLite database
 ├── faiss_hr_index/           # Vector database directory
 ├── .env                      # API keys (not in git)
-└── lumentum_env/             # Virtual environment
+└── attrisense_env/           # Virtual environment
 ```
 
 ## Next Steps

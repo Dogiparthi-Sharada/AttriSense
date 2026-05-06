@@ -2,6 +2,13 @@
 
 An AI-powered workforce analytics platform combining predictive modeling, natural language querying, and interactive visualization for proactive HR management.
 
+## Run Publicly With Streamlit
+```bash
+python run_attrisense.py
+```
+
+By default this starts Streamlit on `0.0.0.0:8501`, which makes the app reachable from the host/network environment that exposes that port.
+
 ## 🚀 Quick Start
 See [QUICKSTART.md](QUICKSTART.md) for detailed setup and execution instructions.
 
@@ -61,6 +68,7 @@ See [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for technical design rationale an
 ├── rag_engine.py             # Vector database for exit interviews
 ├── ai_sql_constructor.py     # NL-to-SQL AI agent
 ├── dashboard.py              # Streamlit web application
+├── run_attrisense.py         # Public Streamlit launcher
 ├── requirements.txt          # Python dependencies
 ├── QUICKSTART.md             # Setup and usage guide
 ├── DESIGN_DECISIONS.md       # Technical design documentation
@@ -69,7 +77,7 @@ See [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for technical design rationale an
 ├── hr_enterprise.db          # SQLite database
 ├── faiss_hr_index/           # FAISS vector database
 ├── .env                      # API keys (configure with OpenAI key)
-└── lumentum_env/             # Python virtual environment
+└── attrisense_env/           # Python virtual environment
 ```
 
 ## 🎯 Use Cases

@@ -8,7 +8,7 @@ import numpy as np
 
 # ============= ENHANCED UI CONFIGURATION =============
 st.set_page_config(
-    page_title="Lumentum HR Analytics Suite", 
+    page_title="AttriSense", 
     layout="wide", 
     initial_sidebar_state="expanded",
     menu_items=None
@@ -51,7 +51,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============= HEADER =============
-st.markdown('<div class="title-main">🎯 Lumentum HR Analytics Suite</div>', unsafe_allow_html=True)
+st.markdown('<div class="title-main">AttriSense Workforce Intelligence</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Intelligent Workforce Intelligence & Predictive Analytics</div>', unsafe_allow_html=True)
 st.divider()
 
@@ -160,7 +160,7 @@ with tab1:
             font=dict(size=12),
             margin=dict(l=0, r=0, t=0, b=0)
         )
-        st.plotly_chart(fig_donut, use_container_width=True)
+        st.plotly_chart(fig_donut, width="stretch")
     
     # High Risk by Department (Enhanced Bar)
     with viz_col2:
@@ -189,7 +189,7 @@ with tab1:
             showlegend=False,
             margin=dict(l=0, r=0, t=0, b=0)
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
     
     st.divider()
     
@@ -210,7 +210,7 @@ with tab1:
         height=400,
         hovermode='x unified'
     )
-    st.plotly_chart(fig_stacked, use_container_width=True)
+    st.plotly_chart(fig_stacked, width="stretch")
 
 
 # ============ TAB 2: DETAILED ANALYTICS ============
@@ -248,7 +248,7 @@ with tab2:
             labels={'Flight_Risk_Probability': 'Risk Probability', 'count': 'Number of Employees'},
             color_discrete_sequence=['#EF553B']
         )
-        st.plotly_chart(fig_risk_dist, use_container_width=True)
+        st.plotly_chart(fig_risk_dist, width="stretch")
         
         st.divider()
         st.markdown("#### Recommended Actions for High Risk Employees")
@@ -271,7 +271,7 @@ with tab2:
                 'Base_Salary': '${:,.0f}',
                 'Tenure_Months': '{:.1f}'
             }),
-            use_container_width=True
+            width="stretch"
         )
     
     elif analysis_type == "Tenure Analysis":
@@ -290,7 +290,7 @@ with tab2:
             labels={'Tenure_Months': 'Tenure (Months)', 'Flight_Risk_Probability': 'Flight Risk Probability'}
         )
         fig_tenure.update_layout(height=500)
-        st.plotly_chart(fig_tenure, use_container_width=True)
+        st.plotly_chart(fig_tenure, width="stretch")
         
         # Tenure statistics
         col1, col2, col3 = st.columns(3)
@@ -315,7 +315,7 @@ with tab2:
             labels={'Base_Salary': 'Annual Salary ($)', 'Department': 'Department'}
         )
         fig_salary.update_layout(height=500)
-        st.plotly_chart(fig_salary, use_container_width=True)
+        st.plotly_chart(fig_salary, width="stretch")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -343,7 +343,7 @@ with tab2:
                 'Avg Salary': '${:,.0f}',
                 'Avg Tenure (Months)': '{:.1f}'
             }),
-            use_container_width=True
+            width="stretch"
         )
 
 
@@ -377,7 +377,7 @@ with tab3:
         placeholder="e.g., How many high risk employees are in the manufacturing department?"
     )
     
-    if st.button("🚀 Generate SQL & Execute", use_container_width=True):
+    if st.button("🚀 Generate SQL & Execute", width="stretch"):
         if user_question:
             with st.spinner("🔄 AI is analyzing your question and generating SQL..."):
                 sql_query, result = query_database_with_ai(user_question)
@@ -399,7 +399,7 @@ with tab3:
                                 st.metric("Result", result[0][0])
                             else:
                                 result_df = pd.DataFrame(result)
-                                st.dataframe(result_df, use_container_width=True)
+                                st.dataframe(result_df, width="stretch")
                         else:
                             st.write(result)
                 else:

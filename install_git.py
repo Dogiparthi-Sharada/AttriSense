@@ -36,7 +36,7 @@ please manually download Git:
 2. Run the installer and complete the installation
 
 3. Then run these commands:
-   cd "c:\Users\shara\OneDrive\Documents\Lumentum_HR_AI"
+   cd "C:\Users\shara\Documents\Codex\2026-05-06\clone-this-repo-change-the-name\AttriSense"
    python setup_git.py
 
 Alternatively, you can use GitHub Desktop:

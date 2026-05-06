@@ -14,7 +14,7 @@ def init_and_commit_repo():
     repo_path = Path(".")
     
     print("=" * 60)
-    print("Employee Flight Risk AI Engine - Git Setup")
+    print("AttriSense - Git Setup")
     print("=" * 60)
     print()
     
@@ -46,7 +46,7 @@ def init_and_commit_repo():
     
     # Create initial commit
     print("\n💾 Creating initial commit...")
-    commit_message = """Initial commit: Employee Flight Risk AI Engine
+    commit_message = """Initial commit: AttriSense
 
 Comprehensive workforce analytics platform with:
 - Predictive turnover risk scoring (Random Forest + SMOTE)
@@ -83,10 +83,10 @@ Architecture: See doc/ folder for diagrams"""
     print("\n📖 Next Steps:")
     print("   1. Create repository on GitHub:")
     print("      - Go to https://github.com/new")
-    print("      - Name: employee-flight-risk-ai-engine")
+    print("      - Name: AttriSense")
     print("      - Description: AI-powered workforce analytics platform")
     print("   2. Add remote and push:")
-    print("      git remote add origin git@github.com:Dogiparthi-Sharada/employee-flight-risk-ai-engine.git")
+    print("      git remote add origin git@github.com:Dogiparthi-Sharada/AttriSense.git")
     print("      git branch -M main")
     print("      git push -u origin main")
     print("\n" + "=" * 60)

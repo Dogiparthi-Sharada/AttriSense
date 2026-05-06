@@ -1,7 +1,7 @@
-# Lumentum HR AI System - Design Decision Document
+# AttriSense - Design Decision Document
 
 ## Project Overview
-This document outlines the architectural and design decisions made for the Lumentum HR AI system, a comprehensive workforce analytics platform combining predictive modeling, natural language querying, and interactive visualization.
+This document outlines the architectural and design decisions made for AttriSense, a comprehensive workforce analytics platform combining predictive modeling, natural language querying, and interactive visualization.
 
 ## Core Requirements
 - **Predictive Analytics**: Identify employees at risk of voluntary turnover

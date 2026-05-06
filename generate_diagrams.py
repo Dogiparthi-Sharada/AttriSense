@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lumentum HR AI System - Professional Diagram Generator
+AttriSense - Professional Diagram Generator
 Generates high-quality PNG diagrams using Pillow
 """
 
@@ -51,7 +51,7 @@ def create_architecture_diagram():
         small_font = ImageFont.load_default()
     
     # Title
-    draw.text((width//2 - 200, 30), "Lumentum HR AI System Architecture", fill='#1a1a1a', font=title_font)
+    draw.text((width//2 - 200, 30), "AttriSense System Architecture", fill='#1a1a1a', font=title_font)
     
     # Define colors
     colors = {

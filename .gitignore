@@ -1,5 +1,6 @@
 # Virtual Environment
 lumentum_env/
+attrisense_env/
 venv/
 env/
 __pycache__/
@@ -40,7 +41,9 @@ doc/*.png
 *.png
 
 # Streamlit
-.streamlit/
+.streamlit/*
+!.streamlit/
+!.streamlit/config.toml
 *.cache
 
 # Database files (if regenerating)
