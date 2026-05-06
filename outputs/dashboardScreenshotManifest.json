@@ -1,0 +1,73 @@
+{
+  "capturedAt": "2026-05-06T17:47:52.211Z",
+  "sourceUrl": "http://127.0.0.1:8501/",
+  "viewportWidth": 1440,
+  "captures": [
+    {
+      "file": "assets/executiveDashboard.png",
+      "title": "Executive Dashboard",
+      "description": "Board-level workforce KPIs, key insights, risk distribution, department hot spots, and department risk profile.",
+      "bytes": 195458,
+      "dimensions": {
+        "width": 1440,
+        "height": 2420,
+        "scrollHeight": 2420
+      }
+    },
+    {
+      "file": "assets/turnoverAnalytics.png",
+      "title": "Turnover Analytics",
+      "description": "Detailed high-risk employee view with intervention KPIs, risk probability distribution, recommended actions, and employee table.",
+      "bytes": 184598,
+      "dimensions": {
+        "width": 1440,
+        "height": 2580,
+        "scrollHeight": 2580
+      }
+    },
+    {
+      "file": "assets/tenureAnalytics.png",
+      "title": "Tenure Analytics",
+      "description": "Tenure versus flight-risk analytics with average tenure, median tenure, and early-tenure employee KPIs.",
+      "bytes": 392775,
+      "dimensions": {
+        "width": 1440,
+        "height": 2740,
+        "scrollHeight": 2740
+      }
+    },
+    {
+      "file": "assets/salaryAnalytics.png",
+      "title": "Salary Analytics",
+      "description": "Compensation distribution by department and risk level with average, median, and range KPIs.",
+      "bytes": 100945,
+      "dimensions": {
+        "width": 1440,
+        "height": 2900,
+        "scrollHeight": 2900
+      }
+    },
+    {
+      "file": "assets/departmentComparison.png",
+      "title": "Department Comparison",
+      "description": "Side-by-side department-level employee count, risk probability, salary, and tenure comparison table.",
+      "bytes": 88550,
+      "dimensions": {
+        "width": 1440,
+        "height": 3060,
+        "scrollHeight": 3060
+      }
+    },
+    {
+      "file": "assets/aiAssistant.png",
+      "title": "AI Assistant",
+      "description": "Natural-language workforce data query assistant with example questions and SQL execution workflow.",
+      "bytes": 110600,
+      "dimensions": {
+        "width": 1440,
+        "height": 3220,
+        "scrollHeight": 3220
+      }
+    }
+  ]
+}

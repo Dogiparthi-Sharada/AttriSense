@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -16,6 +17,7 @@ from config import DATABASE_PATH, ROOT_DIR, SQL_TABLE_NAME
 
 ASSETS_DIR = ROOT_DIR / "assets"
 OUTPUTS_DIR = ROOT_DIR / "outputs"
+SOURCE_ARCHITECTURE_PATH = ROOT_DIR / "doc" / "architecture_diagram.png"
 WIDTH = 1600
 HEIGHT = 980
 COLORS = {
@@ -66,6 +68,61 @@ def draw_centered(
     """Draw one line of text centered around an x-coordinate."""
     width, _ = text_size(draw, text, selected_font)
     draw.text((center_x - width / 2, y), text, font=selected_font, fill=fill)
+
+
+def wrap_text_to_width(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    selected_font: ImageFont.ImageFont,
+    max_width: int,
+) -> list[str]:
+    """Split text into lines that fit inside a fixed-width diagram card.
+
+    Args:
+        draw: Pillow drawing context used for accurate text measurement.
+        text: Text to fit inside the card.
+        selected_font: Font used to measure and draw the text.
+        max_width: Maximum line width in pixels.
+
+    Returns:
+        A list of lines that can be drawn without bleeding outside the card.
+    """
+    words = text.split()
+    lines: list[str] = []
+    current_line = ""
+
+    for word in words:
+        candidate = f"{current_line} {word}".strip()
+        candidate_width, _ = text_size(draw, candidate, selected_font)
+        if candidate_width <= max_width:
+            current_line = candidate
+        else:
+            if current_line:
+                lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        lines.append(current_line)
+
+    return lines
+
+
+def draw_wrapped_text(
+    draw: ImageDraw.ImageDraw,
+    xy: tuple[int, int],
+    text: str,
+    selected_font: ImageFont.ImageFont,
+    fill: str,
+    max_width: int,
+    line_gap: int = 8,
+) -> int:
+    """Draw text line by line and return the y-coordinate below the final line."""
+    x, y = xy
+    line_height = text_size(draw, "Ag", selected_font)[1] + line_gap
+    for line in wrap_text_to_width(draw, text, selected_font, max_width):
+        draw.text((x, y), line, font=selected_font, fill=fill)
+        y += line_height
+    return y
 
 
 def draw_card(
@@ -274,7 +331,7 @@ def create_product_overview(metrics: dict[str, object]) -> None:
     draw.text((860, 820), f"Average salary: ${metrics['avg_salary']:,.0f}", font=font(26, bold=True), fill=COLORS["ink"])
     draw.text((860, 858), f"Average tenure: {metrics['avg_tenure']:.2f} months", font=font(26, bold=True), fill=COLORS["ink"])
 
-    image.save(ASSETS_DIR / "product_overview.png")
+    image.save(ASSETS_DIR / "productOverview.png")
 
 
 def create_risk_distribution(metrics: dict[str, object]) -> None:
@@ -285,7 +342,7 @@ def create_risk_distribution(metrics: dict[str, object]) -> None:
     risk_counts = metrics["risk_counts"]
     draw_donut(draw, {label: risk_counts.get(label, 0) for label in ("High Risk", "Medium Risk", "Low Risk")}, (165, 230, 765, 830))
     draw_horizontal_bars(draw, {label: risk_counts.get(label, 0) for label in ("Low Risk", "High Risk", "Medium Risk")}, 900, 315, 430, 44)
-    image.save(ASSETS_DIR / "risk_distribution.png")
+    image.save(ASSETS_DIR / "riskDistribution.png")
 
 
 def create_department_concentration(metrics: dict[str, object]) -> None:
@@ -296,29 +353,38 @@ def create_department_concentration(metrics: dict[str, object]) -> None:
     draw.rounded_rectangle((160, 220, 1440, 850), radius=30, fill=COLORS["panel"], outline=COLORS["line"], width=2)
     draw_horizontal_bars(draw, metrics["high_risk_by_department"], 250, 330, 850, 54)
     draw.text((250, 730), "Manufacturing carries the largest concentration in this demo scenario.", font=font(30, bold=True), fill=COLORS["ink"])
-    image.save(ASSETS_DIR / "high_risk_by_department.png")
+    image.save(ASSETS_DIR / "highRiskByDepartment.png")
 
 
 def create_architecture_image() -> None:
     """Create a simple architecture PNG showing how the production scripts connect."""
+    if SOURCE_ARCHITECTURE_PATH.exists():
+        # The hand-curated diagram in doc/ is the preferred architecture visual.
+        # Copying it into assets/ keeps README links self-contained.
+        shutil.copyfile(SOURCE_ARCHITECTURE_PATH, ASSETS_DIR / "architecture.png")
+        return
+
     image = Image.new("RGB", (WIDTH, HEIGHT), COLORS["bg"])
     draw = ImageDraw.Draw(image)
     draw_header(draw, "AttriSense Architecture", "Simple pipeline, clear ownership, production-readable files")
 
     boxes = [
-        ((90, 245, 405, 410), "generate_demo_workforce_data.py", "Creates synthetic HR data", "#dbeafe"),
-        ((520, 245, 835, 410), "train_retention_risk_model.py", "Scores retention risk", "#dcfce7"),
-        ((950, 245, 1265, 410), "hr_enterprise.db", "SQLite serving table", "#fef3c7"),
-        ((300, 585, 615, 750), "natural_language_sql.py", "Safe read-only AI SQL", "#ede9fe"),
-        ((730, 585, 1045, 750), "streamlit_app.py", "Executive dashboard", "#fee2e2"),
+        ((90, 245, 455, 440), "Data Generator", "generate_demo_workforce_data.py", "Creates synthetic HR data", "#dbeafe"),
+        ((575, 245, 940, 440), "Risk Model", "train_retention_risk_model.py", "Scores retention risk", "#dcfce7"),
+        ((1060, 245, 1425, 440), "SQLite Store", "hr_enterprise.db", "Serves workforce_predictions", "#fef3c7"),
+        ((340, 600, 705, 795), "SQL Assistant", "natural_language_sql.py", "Runs safe read-only AI SQL", "#ede9fe"),
+        ((855, 600, 1220, 795), "Streamlit Dashboard", "streamlit_app.py", "Shows executive analytics", "#fee2e2"),
     ]
 
-    for xy, title, body, fill in boxes:
+    for xy, title, filename, body, fill in boxes:
         draw.rounded_rectangle(xy, radius=22, fill=fill, outline=COLORS["line"], width=2)
-        draw.multiline_text((xy[0] + 24, xy[1] + 34), title, font=font(24, bold=True), fill=COLORS["ink"], spacing=4)
-        draw.text((xy[0] + 24, xy[1] + 103), body, font=font(22), fill=COLORS["muted"])
+        text_left = xy[0] + 28
+        text_width = xy[2] - xy[0] - 56
+        draw_wrapped_text(draw, (text_left, xy[1] + 30), title, font(27, bold=True), COLORS["ink"], text_width)
+        next_y = draw_wrapped_text(draw, (text_left, xy[1] + 78), filename, font(18, bold=True), COLORS["muted"], text_width)
+        draw_wrapped_text(draw, (text_left, next_y + 14), body, font(21), COLORS["muted"], text_width)
 
-    for start, end in [((405, 328), (520, 328)), ((835, 328), (950, 328)), ((1105, 410), (895, 585)), ((950, 410), (455, 585))]:
+    for start, end in [((455, 342), (575, 342)), ((940, 342), (1060, 342)), ((1240, 440), (1038, 600)), ((1060, 440), (522, 600))]:
         draw.line((start, end), fill=COLORS["ink"], width=5)
         draw.ellipse((end[0] - 7, end[1] - 7, end[0] + 7, end[1] + 7), fill=COLORS["ink"])
 

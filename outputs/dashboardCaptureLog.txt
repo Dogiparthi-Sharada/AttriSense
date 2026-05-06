@@ -1,0 +1,15 @@
+AttriSense Dashboard Screenshot Capture
+=======================================
+
+Source URL: http://127.0.0.1:8501/
+Captured at: 2026-05-06T17:47:52.211Z
+Viewport width: 1440px
+
+assets/executiveDashboard.png - Executive Dashboard - 195458 bytes - 1440x2420
+assets/turnoverAnalytics.png - Turnover Analytics - 184598 bytes - 1440x2580
+assets/tenureAnalytics.png - Tenure Analytics - 392775 bytes - 1440x2740
+assets/salaryAnalytics.png - Salary Analytics - 100945 bytes - 1440x2900
+assets/departmentComparison.png - Department Comparison - 88550 bytes - 1440x3060
+assets/aiAssistant.png - AI Assistant - 110600 bytes - 1440x3220
+
+All screenshots were captured from the restored Streamlit dashboard running locally.

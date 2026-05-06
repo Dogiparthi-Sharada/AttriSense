@@ -4,7 +4,7 @@ AttriSense is a production-readable workforce intelligence demo that turns HR da
 
 Repository: https://github.com/Dogiparthi-Sharada/AttriSense
 
-![AttriSense product overview](assets/product_overview.png)
+![AttriSense product overview](assets/productOverview.png)
 
 ## What This Project Proves
 
@@ -27,13 +27,39 @@ The current dataset is synthetic, so the project is safe to run, demo, publish, 
 | Exit-interview vector index | Builds a FAISS index for semantic analysis of synthetic exit interview notes. |
 | Public Streamlit launcher | Runs the app on `0.0.0.0` so it can be exposed from a VM, server, tunnel, or deployment platform. |
 
+## Dashboard Screenshots
+
+These screenshots were captured from the restored Streamlit dashboard running at `http://127.0.0.1:8501/`. The capture log lives in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
+The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outputs/readmeAssetInventory.txt).
+
+| Asset | What it shows |
+| --- | --- |
+| `assets/executiveDashboard.png` | Executive KPIs, key insights, flight-risk distribution, high-risk department hot spots, and department risk profile. |
+| `assets/turnoverAnalytics.png` | Detailed high-risk employee analytics with intervention KPIs, risk probability distribution, recommended actions, and employee details. |
+| `assets/tenureAnalytics.png` | Tenure versus flight-risk analytics with average tenure, median tenure, and early-tenure employee KPIs. |
+| `assets/salaryAnalytics.png` | Compensation distribution by department and risk level with average salary, median salary, and salary range KPIs. |
+| `assets/departmentComparison.png` | Department-level comparison table for employee count, average risk, salary, and tenure. |
+| `assets/aiAssistant.png` | Natural-language AI assistant with example workforce questions and SQL execution workflow. |
+
+![Executive dashboard](assets/executiveDashboard.png)
+
+![Turnover analytics](assets/turnoverAnalytics.png)
+
+![Tenure analytics](assets/tenureAnalytics.png)
+
+![Salary analytics](assets/salaryAnalytics.png)
+
+![Department comparison](assets/departmentComparison.png)
+
+![AI assistant](assets/aiAssistant.png)
+
 ## Visual Outputs
 
-The images below are generated from the real SQLite output by `create_readme_assets.py`.
+The images below are generated from the real SQLite output by `create_readme_assets.py`. The architecture image is copied from [doc/architecture_diagram.png](doc/architecture_diagram.png) into `assets/architecture.png` so the README uses the preferred diagram.
 
-![Risk distribution](assets/risk_distribution.png)
+![Risk distribution](assets/riskDistribution.png)
 
-![High-risk employees by department](assets/high_risk_by_department.png)
+![High-risk employees by department](assets/highRiskByDepartment.png)
 
 ![AttriSense architecture](assets/architecture.png)
 
