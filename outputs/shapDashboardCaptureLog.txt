@@ -1,8 +1,8 @@
 AttriSense SHAP Dashboard Capture
 =================================
 
-Source URL: http://127.0.0.1:8502/
+Source URL: http://127.0.0.1:8503/
 Captured asset: assets/shapInsightsDashboard.png
-Bytes: 160759
+Bytes: 140423
 
-This screenshot shows the SHAP Insights tab added for model explainability.
+This screenshot shows the SHAP Insights tab with manager-tenure explainability.

@@ -1,12 +1,21 @@
 import sqlite3
 
+import joblib
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from config import DATABASE_PATH, SHAP_FEATURE_TABLE_NAME, SQL_TABLE_NAME
+from config import (
+    CALIBRATION_TABLE_NAME,
+    DATABASE_PATH,
+    DEPARTMENT_CODE_MAP,
+    MODEL_ARTIFACT_PATH,
+    SHAP_FEATURE_TABLE_NAME,
+    SQL_TABLE_NAME,
+    SURVIVAL_CURVE_TABLE_NAME,
+)
 from natural_language_sql import query_database_with_ai
 
 
@@ -14,11 +23,13 @@ SHAP_COLUMNS = [
     "SHAP_Tenure_Impact",
     "SHAP_Compensation_Impact",
     "SHAP_Department_Impact",
+    "SHAP_Manager_Tenure_Impact",
 ]
 SHAP_DRIVER_LABELS = {
     "SHAP_Tenure_Impact": "Tenure",
     "SHAP_Compensation_Impact": "Compensation",
     "SHAP_Department_Impact": "Department",
+    "SHAP_Manager_Tenure_Impact": "Manager tenure",
 }
 
 
@@ -33,9 +44,314 @@ def load_optional_table(connection: sqlite3.Connection, table_name: str) -> pd.D
     return pd.read_sql_query(f"SELECT * FROM {table_name}", connection)
 
 
+@st.cache_resource
+def load_model_artifact() -> dict[str, object] | None:
+    """Load the persisted model artifact used by the What-If simulator."""
+    if not MODEL_ARTIFACT_PATH.exists():
+        return None
+    return joblib.load(MODEL_ARTIFACT_PATH)
+
+
 def format_currency(value: float) -> str:
     """Format large business values as whole-dollar strings."""
     return f"${value:,.0f}"
+
+
+def categorize_risk(probability: float) -> str:
+    """Convert a probability into the dashboard's risk-band language."""
+    if probability > 0.75:
+        return "High Risk"
+    if probability > 0.40:
+        return "Medium Risk"
+    return "Low Risk"
+
+
+def score_employee_scenario(
+    model_artifact: dict[str, object],
+    employee: pd.Series,
+    salary_delta: int,
+    tenure_extra: int,
+    manager_change: bool,
+) -> float:
+    """Score a What-If scenario using the persisted production model."""
+    feature_columns = model_artifact["feature_columns"]
+    model = model_artifact["model"]
+    modified = employee.copy()
+    modified["Base_Salary"] = modified["Base_Salary"] * (1 + salary_delta / 100)
+    modified["Tenure_Months"] = modified["Tenure_Months"] + tenure_extra
+
+    # A manager change resets relationship tenure. Without a change, elapsed
+    # time naturally adds to manager tenure along with employee tenure.
+    if manager_change:
+        modified["Manager_Tenure_Months"] = 0
+    else:
+        modified["Manager_Tenure_Months"] = modified["Manager_Tenure_Months"] + tenure_extra
+
+    modified["Dept_Code"] = DEPARTMENT_CODE_MAP[modified["Department"]]
+    scenario_frame = pd.DataFrame([{column: modified[column] for column in feature_columns}])
+    return float(model.predict_proba(scenario_frame)[0][1])
+
+
+def build_manager_rollup(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate employee risk into manager-level operating metrics."""
+    rollup = (
+        df.groupby(["Manager_ID", "Department"], as_index=False)
+        .agg(
+            Total_Reports=("Emp_ID", "count"),
+            High_Risk_Reports=("Risk_Level", lambda values: int((values == "High Risk").sum())),
+            Avg_Risk_Probability=("Flight_Risk_Probability", "mean"),
+            Avg_Manager_Tenure_Months=("Manager_Tenure_Months", "mean"),
+            Salary_Exposure=("Base_Salary", "sum"),
+        )
+    )
+    rollup["High_Risk_Rate"] = rollup["High_Risk_Reports"] / rollup["Total_Reports"]
+    rollup["Weighted_Risk_Exposure"] = rollup["Salary_Exposure"] * rollup["Avg_Risk_Probability"]
+    return rollup.sort_values(["High_Risk_Rate", "Avg_Risk_Probability"], ascending=False)
+
+
+def render_what_if_simulator(df: pd.DataFrame) -> None:
+    """Render the live salary, tenure, and manager-change simulator."""
+    st.markdown("#### What-If Simulator")
+    model_artifact = load_model_artifact()
+    if model_artifact is None:
+        st.warning("Model artifact missing. Run `python train_retention_risk_model.py` first.")
+        return
+
+    employee_options = df.sort_values("Flight_Risk_Probability", ascending=False).head(300)
+    labels = employee_options.apply(
+        lambda row: (
+            f"{int(row['Emp_ID'])} | {row['Department']} | "
+            f"{row['Flight_Risk_Probability']:.1%} current risk"
+        ),
+        axis=1,
+    )
+    selected_label = st.selectbox("Employee scenario", labels, key="whatif_employee")
+    employee_id = int(selected_label.split(" | ")[0])
+    employee = employee_options[employee_options["Emp_ID"] == employee_id].iloc[0]
+
+    slider_col1, slider_col2, slider_col3 = st.columns(3)
+    salary_delta = slider_col1.slider("Salary change (%)", -20, 20, 0)
+    tenure_extra = slider_col2.slider("Tenure extension (months)", 0, 24, 0)
+    manager_change = slider_col3.checkbox("Manager change")
+
+    new_probability = score_employee_scenario(
+        model_artifact,
+        employee,
+        salary_delta,
+        tenure_extra,
+        manager_change,
+    )
+    current_probability = float(employee["Flight_Risk_Probability"])
+    delta = new_probability - current_probability
+
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.metric("Current risk", f"{current_probability:.1%}", employee["Risk_Level"])
+    kpi2.metric("Scenario risk", f"{new_probability:.1%}", f"{delta:+.1%}")
+    kpi3.metric("Scenario band", categorize_risk(new_probability))
+    kpi4.metric("Current manager tenure", f"{employee['Manager_Tenure_Months']:.0f} months")
+
+    if delta < -0.05:
+        st.success("This scenario materially reduces flight risk in the model.")
+    elif delta > 0.05:
+        st.warning("This scenario increases flight risk. It needs a stronger intervention.")
+    else:
+        st.info("This scenario has a modest model impact. Try combining salary and tenure levers.")
+
+
+def render_manager_rollup(df: pd.DataFrame) -> None:
+    """Render manager-level risk concentration and action queues."""
+    st.markdown("#### Manager-Level Risk Rollup")
+    manager_rollup = build_manager_rollup(df)
+    top_managers = manager_rollup.head(15).copy()
+    top_managers["Manager_ID"] = top_managers["Manager_ID"].astype(str)
+
+    chart = px.bar(
+        top_managers.sort_values("High_Risk_Rate"),
+        x="High_Risk_Rate",
+        y="Manager_ID",
+        orientation="h",
+        color="Department",
+        text="High_Risk_Reports",
+        title="Managers with highest high-risk concentration",
+        labels={"High_Risk_Rate": "% high risk", "Manager_ID": "Manager ID"},
+    )
+    chart.update_traces(texttemplate="%{text} high-risk", textposition="outside")
+    chart.update_layout(height=520, xaxis_tickformat=".0%")
+    st.plotly_chart(chart, width="stretch")
+
+    st.dataframe(
+        manager_rollup[
+            [
+                "Manager_ID",
+                "Department",
+                "Total_Reports",
+                "High_Risk_Reports",
+                "High_Risk_Rate",
+                "Avg_Risk_Probability",
+                "Avg_Manager_Tenure_Months",
+                "Weighted_Risk_Exposure",
+            ]
+        ]
+        .head(25)
+        .style.format(
+            {
+                "High_Risk_Rate": "{:.1%}",
+                "Avg_Risk_Probability": "{:.1%}",
+                "Avg_Manager_Tenure_Months": "{:.1f}",
+                "Weighted_Risk_Exposure": "${:,.0f}",
+            }
+        ),
+        width="stretch",
+    )
+
+
+def render_attrition_cost_calculator(df: pd.DataFrame) -> None:
+    """Render the CFO-facing cost-of-attrition calculator."""
+    st.markdown("#### Cost-of-Attrition Calculator")
+    multiplier = st.slider("Replacement cost multiplier", 0.5, 3.0, 1.5, 0.1)
+    high_risk_df = df[df["Risk_Level"] == "High Risk"]
+    annualized_loss = len(high_risk_df) * df["Base_Salary"].mean() * multiplier
+    probability_weighted_loss = (
+        high_risk_df["Base_Salary"] * high_risk_df["Flight_Risk_Probability"] * multiplier
+    ).sum()
+    quarterly_loss = annualized_loss / 4
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Predicted preventable loss this quarter", format_currency(quarterly_loss))
+    col2.metric("Annualized high-risk exposure", format_currency(annualized_loss))
+    col3.metric("Probability-weighted exposure", format_currency(probability_weighted_loss))
+
+    st.info(
+        "CFO translation: this turns model output into a budget conversation. "
+        "The default assumes replacement cost is 1.5x salary."
+    )
+
+
+def render_decision_tools(df: pd.DataFrame) -> None:
+    """Render Tier 1 tools that convert predictions into business action."""
+    st.markdown("### Decision Tools")
+    st.markdown("Tier 1 features that move AttriSense from prediction into action.")
+    tool_tabs = st.tabs(["What-If Simulator", "Manager Rollup", "Cost Calculator"])
+    with tool_tabs[0]:
+        render_what_if_simulator(df)
+    with tool_tabs[1]:
+        render_manager_rollup(df)
+    with tool_tabs[2]:
+        render_attrition_cost_calculator(df)
+
+
+def render_survival_and_calibration(
+    df: pd.DataFrame,
+    survival_curves: pd.DataFrame,
+    calibration_table: pd.DataFrame,
+) -> None:
+    """Render Tier 2 Cox survival analysis and calibration QA."""
+    st.markdown("### Survival & Calibration")
+    st.markdown("Tier 2 model-risk views for time-to-event decisions and probability QA.")
+
+    if survival_curves.empty or calibration_table.empty:
+        st.warning("Survival or calibration outputs are missing. Run `python train_retention_risk_model.py`.")
+        return
+
+    high_risk = df[df["Risk_Level"] == "High Risk"]
+    col1, col2, col3 = st.columns(3)
+    col1.metric(
+        "High-risk median expected tenure",
+        f"{high_risk['Cox_Median_Expected_Tenure_Months'].median():.1f} months",
+    )
+    col2.metric(
+        "High-risk 12-month survival",
+        f"{high_risk['Cox_12_Month_Survival_Probability'].mean():.1%}",
+    )
+    col3.metric("Calibration Brier score", f"{calibration_table['Brier_Score'].iloc[0]:.3f}")
+
+    survival_chart = px.line(
+        survival_curves,
+        x="Month",
+        y="Survival_Probability",
+        color="Risk_Level",
+        markers=True,
+        title="Cox survival curves by risk cohort",
+        labels={"Survival_Probability": "Probability still employed"},
+    )
+    survival_chart.update_layout(height=470, yaxis_tickformat=".0%")
+    st.plotly_chart(survival_chart, width="stretch")
+
+    calibration_chart = go.Figure()
+    calibration_chart.add_trace(
+        go.Scatter(
+            x=calibration_table["Mean_Predicted_Probability"],
+            y=calibration_table["Observed_Turnover_Rate"],
+            mode="lines+markers",
+            name="Model calibration",
+        )
+    )
+    calibration_chart.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode="lines",
+            name="Perfect calibration",
+            line={"dash": "dash", "color": "#64748b"},
+        )
+    )
+    calibration_chart.update_layout(
+        title="Calibration plot: predicted vs observed turnover",
+        xaxis_title="Mean predicted probability",
+        yaxis_title="Observed turnover rate",
+        height=460,
+        xaxis_tickformat=".0%",
+        yaxis_tickformat=".0%",
+    )
+    st.plotly_chart(calibration_chart, width="stretch")
+
+    st.dataframe(
+        calibration_table.style.format(
+            {
+                "Mean_Predicted_Probability": "{:.1%}",
+                "Observed_Turnover_Rate": "{:.1%}",
+                "Brier_Score": "{:.3f}",
+                "Holdout_Employee_Count": "{:,.0f}",
+            }
+        ),
+        width="stretch",
+    )
+
+
+def render_ethics_tab(df: pd.DataFrame) -> None:
+    """Render limitations, ethics, and responsible AI guardrails."""
+    st.markdown("### Limitations & Ethics")
+    st.markdown("A production-grade people analytics product must state what it will not do.")
+
+    fairness_summary = (
+        df.groupby("Department")
+        .agg(
+            Employees=("Emp_ID", "count"),
+            High_Risk_Rate=("Risk_Level", lambda values: (values == "High Risk").mean()),
+            Avg_Risk=("Flight_Risk_Probability", "mean"),
+        )
+        .reset_index()
+    )
+
+    st.markdown(
+        """
+- **Synthetic data caveat:** this repository uses generated records for safe public demos.
+- **Correlational, not causal:** model drivers describe learned associations, not proof that one factor causes attrition.
+- **Fairness audit expectation:** department-level risk rates are monitored before any production deployment.
+- **NYC Local Law 144 alignment:** production use would require an independent bias audit, public notices, and data governance.
+- **No adverse-decision policy:** AttriSense should prioritize support and retention outreach, not discipline, termination, or compensation denial.
+- **Human-in-the-loop:** HR partners must review context before acting on any score.
+"""
+    )
+    st.markdown("Model card: [MODEL_CARD.md](MODEL_CARD.md)")
+    st.dataframe(
+        fairness_summary.style.format(
+            {"High_Risk_Rate": "{:.1%}", "Avg_Risk": "{:.1%}"}
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+
 
 
 def has_shap_outputs(df: pd.DataFrame, feature_impact: pd.DataFrame) -> bool:
@@ -304,6 +620,8 @@ st.divider()
 conn = sqlite3.connect(DATABASE_PATH)
 df = pd.read_sql_query(f"SELECT * FROM {SQL_TABLE_NAME}", conn)
 shap_feature_impact = load_optional_table(conn, SHAP_FEATURE_TABLE_NAME)
+calibration_table = load_optional_table(conn, CALIBRATION_TABLE_NAME)
+survival_curves = load_optional_table(conn, SURVIVAL_CURVE_TABLE_NAME)
 
 # Calculate key metrics
 total_employees = len(df)
@@ -313,8 +631,16 @@ low_risk_count = len(df[df["Risk_Level"] == "Low Risk"])
 high_risk_pct = high_risk_count / total_employees * 100
 
 # ============= TABS =============
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["📊 Executive Dashboard", "🔍 Detailed Analytics", "🤖 AI Assistant", "SHAP Insights"]
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+    [
+        "📊 Executive Dashboard",
+        "🔍 Detailed Analytics",
+        "Decision Tools",
+        "SHAP Insights",
+        "Survival & Calibration",
+        "🤖 AI Assistant",
+        "Ethics",
+    ]
 )
 
 # ============ TAB 1: EXECUTIVE DASHBOARD ============
@@ -693,8 +1019,23 @@ with tab2:
         )
 
 
-# ============ TAB 3: AI ASSISTANT ============
+# ============ TAB 3: DECISION TOOLS ============
 with tab3:
+    render_decision_tools(df)
+
+
+# ============ TAB 4: SHAP EXPLAINABILITY ============
+with tab4:
+    render_shap_explainability(df, shap_feature_impact)
+
+
+# ============ TAB 5: SURVIVAL AND CALIBRATION ============
+with tab5:
+    render_survival_and_calibration(df, survival_curves, calibration_table)
+
+
+# ============ TAB 6: AI ASSISTANT ============
+with tab6:
     st.markdown("### 🤖 Natural Language Data Query Assistant")
     st.markdown(
         "Ask questions about your workforce data in plain English. Our AI will translate them to SQL and return insights."
@@ -771,8 +1112,8 @@ with tab3:
             st.warning("⚠️ Please enter a question first!")
 
 
-# ============ TAB 4: SHAP EXPLAINABILITY ============
-with tab4:
-    render_shap_explainability(df, shap_feature_impact)
+# ============ TAB 7: ETHICS ============
+with tab7:
+    render_ethics_tab(df)
 
 conn.close()

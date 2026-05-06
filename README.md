@@ -24,13 +24,16 @@ The current dataset is synthetic, so the project is safe to run, demo, publish, 
 | Executive dashboard | Gives leaders a fast read on total workforce, risk bands, department concentration, and intervention priorities. |
 | Retention-risk model | Uses Random Forest plus SMOTE to learn rare turnover patterns and score each employee. |
 | SHAP explainability | Explains high-risk employee scores with primary risk drivers and global feature impact. |
+| Decision tools | Adds a live What-If Simulator, manager-level risk rollup, and CFO-facing attrition cost calculator. |
+| Survival and calibration | Adds Cox survival curves, median expected tenure, 12-month survival probability, and calibration QA. |
+| Responsible AI | Adds a Limitations & Ethics tab plus a project model card for deployment guardrails. |
 | Natural-language SQL | Converts plain-English HR questions into guarded, read-only SQLite queries. |
 | Exit-interview vector index | Builds a FAISS index for semantic analysis of synthetic exit interview notes. |
 | Public Streamlit launcher | Runs the app on `0.0.0.0` so it can be exposed from a VM, server, tunnel, or deployment platform. |
 
 ## Dashboard Screenshots
 
-These screenshots were captured from the restored Streamlit dashboard running at `http://127.0.0.1:8501/`. The capture log lives in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
+These screenshots were captured from the restored Streamlit dashboard. Original screenshots were captured on `8501`; the Tier 1/Tier 2 screenshots were captured on `8503`. The capture logs live in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt) and [outputs/tierFeatureCaptureLog.txt](outputs/tierFeatureCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
 The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outputs/readmeAssetInventory.txt).
 
 | Asset | What it shows |
@@ -40,8 +43,13 @@ The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outp
 | `assets/tenureAnalytics.png` | Tenure versus flight-risk analytics with average tenure, median tenure, and early-tenure employee KPIs. |
 | `assets/salaryAnalytics.png` | Compensation distribution by department and risk level with average salary, median salary, and salary range KPIs. |
 | `assets/departmentComparison.png` | Department-level comparison table for employee count, average risk, salary, and tenure. |
-| `assets/aiAssistant.png` | Natural-language AI assistant with example workforce questions and SQL execution workflow. |
+| `assets/decisionToolsDashboard.png` | What-If Simulator, manager risk rollup, and cost-of-attrition calculator. |
+| `assets/managerRiskRollup.png` | Manager-level risk concentration sorted by high-risk percentage. |
+| `assets/costCalculator.png` | CFO-facing cost-of-attrition calculator with replacement-cost multiplier. |
 | `assets/shapInsightsDashboard.png` | SHAP explainability center with global drivers, board-level insights, and employee-level risk explanations. |
+| `assets/survivalCalibrationDashboard.png` | Cox survival curves and calibration plot for model QA. |
+| `assets/ethicsDashboard.png` | Limitations, ethics, fairness summary, and model-card link. |
+| `assets/aiAssistant.png` | Natural-language AI assistant with example workforce questions and SQL execution workflow. |
 
 ![Executive dashboard](assets/executiveDashboard.png)
 
@@ -55,7 +63,17 @@ The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outp
 
 ![AI assistant](assets/aiAssistant.png)
 
+![Decision tools dashboard](assets/decisionToolsDashboard.png)
+
+![Manager risk rollup](assets/managerRiskRollup.png)
+
+![Cost calculator](assets/costCalculator.png)
+
 ![SHAP insights dashboard](assets/shapInsightsDashboard.png)
+
+![Survival and calibration dashboard](assets/survivalCalibrationDashboard.png)
+
+![Ethics dashboard](assets/ethicsDashboard.png)
 
 ## Visual Outputs
 
@@ -83,6 +101,8 @@ $ python.exe train_retention_risk_model.py
 Loading workforce data...
 Saved 5,000 employee risk scores to hr_enterprise.db:workforce_predictions.
 Saved SHAP feature impact to hr_enterprise.db:shap_feature_impact and outputs/shapInsights.txt.
+Saved calibration bins to hr_enterprise.db:model_calibration and survival curves to hr_enterprise.db:survival_curves.
+Saved live scoring model artifact to attrisense_model.joblib.
 exit_code=0
 
 Skipped optional build_exit_interview_vector_index.py in this capture because it requires OPENAI_API_KEY.
@@ -92,18 +112,18 @@ Metrics captured in [outputs/metrics_snapshot.txt](outputs/metrics_snapshot.txt)
 
 ```text
 Total workforce: 5,000
-Average salary: $104,679
-Average tenure: 29.82 months
+Average salary: $104,673
+Average tenure: 29.81 months
 
 Risk distribution:
-- High Risk: 491
-- Medium Risk: 171
-- Low Risk: 4,338
+- High Risk: 526
+- Medium Risk: 181
+- Low Risk: 4,293
 
 High-risk employees by department:
-- Manufacturing: 370
-- Engineering: 103
-- Sales: 18
+- Manufacturing: 406
+- Engineering: 100
+- Sales: 20
 ```
 
 ## Sample Data Outputs
@@ -111,23 +131,23 @@ High-risk employees by department:
 | Metric | Output |
 | --- | ---: |
 | Total workforce | 5,000 |
-| High flight risk | 491 |
-| Medium risk | 171 |
-| Low risk | 4,338 |
-| Average salary | $104,679 |
-| Average tenure | 29.82 months |
+| High flight risk | 526 |
+| Medium risk | 181 |
+| Low risk | 4,293 |
+| Average salary | $104,673 |
+| Average tenure | 29.81 months |
 
 | Department | High-risk employees |
 | --- | ---: |
-| Manufacturing | 370 |
-| Engineering | 103 |
-| Sales | 18 |
+| Manufacturing | 406 |
+| Engineering | 100 |
+| Sales | 20 |
 
 | Emp_ID | Department | Tenure | Salary | Risk probability | Risk level |
 | ---: | --- | ---: | ---: | ---: | --- |
-| 1009 | Manufacturing | 3 months | $107,927 | 1.000 | High Risk |
-| 1050 | Manufacturing | 20 months | $71,247 | 1.000 | High Risk |
-| 1134 | Manufacturing | 3 months | $119,481 | 1.000 | High Risk |
+| 1027 | Manufacturing | 4 months | $62,158 | 1.000 | High Risk |
+| 1188 | Manufacturing | 4 months | $104,722 | 1.000 | High Risk |
+| 1271 | Manufacturing | 2 months | $78,527 | 1.000 | High Risk |
 
 ## AI Assistant Example
 
@@ -149,8 +169,28 @@ WHERE Department = 'Manufacturing'
 Result:
 
 ```text
-370
+406
 ```
+
+## Tier 1 Decision Tools
+
+The Week 3 Tier 1 features are implemented in the `Decision Tools` tab:
+
+- **What-If Simulator:** select an employee, adjust salary by -20% to +20%, add tenure, toggle a manager change, and watch the live model score recalculate.
+- **Manager-Level Risk Rollup:** groups employees by `Manager_ID`, shows total reports, high-risk percentage, average risk, manager tenure, and salary-weighted exposure.
+- **Cost-of-Attrition Calculator:** lets leaders change the replacement-cost multiplier and immediately see quarterly, annualized, and probability-weighted exposure.
+
+These turn the project from a prediction dashboard into an operating system for retention decisions.
+
+## Tier 2 Model QA
+
+The Week 3 Tier 2 features are implemented in `Survival & Calibration` and `Ethics`:
+
+- **Cox Survival Analysis:** fits a Cox proportional hazards model and writes cohort survival curves into `survival_curves`.
+- **Calibration Plot:** writes holdout probability bins into `model_calibration` and displays predicted vs observed turnover.
+- **Limitations & Ethics:** documents synthetic data caveats, correlation limits, fairness monitoring, NYC Local Law 144 alignment, and a no-adverse-decision policy.
+
+See [MODEL_CARD.md](MODEL_CARD.md) for the responsible-use model card.
 
 ## SHAP Explainability
 
@@ -160,14 +200,16 @@ The SHAP output is written into SQLite and summarized in [outputs/shapInsights.t
 
 ```text
 Global model drivers by mean absolute SHAP value:
-- Tenure: 0.1666
-- Compensation: 0.1345
-- Department: 0.0787
+- Tenure: 0.1452
+- Manager tenure: 0.0992
+- Compensation: 0.0989
+- Department: 0.0599
 
 Primary drivers among high-risk employees:
-- Tenure: 295 employees
-- Compensation: 139 employees
-- Department: 57 employees
+- Tenure: 273 employees
+- Compensation: 117 employees
+- Manager tenure: 101 employees
+- Department: 35 employees
 ```
 
 This is the enterprise-grade layer: leaders can see which workforce levers are driving risk, HR can explain individual high-risk scores, and Finance gets a salary-weighted exposure estimate instead of only a model probability.
@@ -257,10 +299,12 @@ AttriSense/
 |-- streamlit_app.py                        # Streamlit dashboard
 |-- launch_streamlit_app.py                 # Public Streamlit launcher
 |-- create_readme_assets.py                 # Generates README PNGs and output captures
+|-- MODEL_CARD.md                           # Responsible AI model card
 |-- assets/                                 # README-ready generated PNGs
 |-- outputs/                                # Captured command and metric outputs
 |-- attrisense_synthetic_hr.csv             # Demo dataset
 |-- hr_enterprise.db                        # Demo prediction database
+|-- attrisense_model.joblib                 # Persisted model for What-If scoring
 |-- faiss_hr_index/                         # Demo vector index
 |-- .streamlit/config.toml                  # Streamlit runtime config
 |-- .env.example                            # Environment variable template

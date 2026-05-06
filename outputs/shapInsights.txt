@@ -3,18 +3,20 @@ AttriSense SHAP Explainability Insights
 
 Explained employees: 5,000
 Employees with SHAP values: 1,200
-High-risk employees explained: 491
-Estimated high-risk salary exposure: $23,699,529
+High-risk employees explained: 526
+Estimated high-risk salary exposure: $24,605,142
 
 Global model drivers by mean absolute SHAP value:
-- Tenure: 0.1666 (average direction +0.0389)
-- Compensation: 0.1345 (average direction -0.0258)
-- Department: 0.0787 (average direction +0.0242)
+- Tenure: 0.1452 (average direction +0.0548)
+- Manager tenure: 0.0992 (average direction -0.0209)
+- Compensation: 0.0989 (average direction -0.0040)
+- Department: 0.0599 (average direction +0.0030)
 
 Primary drivers among high-risk employees:
-- Tenure: 295 employees
-- Compensation: 139 employees
-- Department: 57 employees
+- Tenure: 273 employees
+- Compensation: 117 employees
+- Manager tenure: 101 employees
+- Department: 35 employees
 
 Business interpretation:
 - SHAP makes every risk score explainable, which is required for executive trust.

@@ -1,20 +1,20 @@
 AttriSense Metrics Snapshot
 ===========================
 Total workforce: 5,000
-Average salary: $104,679
-Average tenure: 29.82 months
+Average salary: $104,673
+Average tenure: 29.81 months
 
 Risk distribution:
-- High Risk: 491
-- Medium Risk: 171
-- Low Risk: 4,338
+- High Risk: 526
+- Medium Risk: 181
+- Low Risk: 4,293
 
 High-risk employees by department:
-- Manufacturing: 370
-- Engineering: 103
-- Sales: 18
+- Manufacturing: 406
+- Engineering: 100
+- Sales: 20
 
 Top high-risk sample rows:
-- Emp_ID 1009 | Manufacturing | 3 months | $107,927 | risk 1.000 | High Risk
-- Emp_ID 1050 | Manufacturing | 20 months | $71,247 | risk 1.000 | High Risk
-- Emp_ID 1134 | Manufacturing | 3 months | $119,481 | risk 1.000 | High Risk
+- Emp_ID 1027 | Manufacturing | 4 months | $62,158 | risk 1.000 | High Risk
+- Emp_ID 1188 | Manufacturing | 4 months | $104,722 | risk 1.000 | High Risk
+- Emp_ID 1271 | Manufacturing | 2 months | $78,527 | risk 1.000 | High Risk

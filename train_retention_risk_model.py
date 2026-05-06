@@ -4,25 +4,35 @@ from __future__ import annotations
 
 import sqlite3
 
+import joblib
 import numpy as np
 import pandas as pd
 import shap
 from imblearn.over_sampling import SMOTE
+from lifelines import CoxPHFitter
+from sklearn.calibration import calibration_curve
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import brier_score_loss
+from sklearn.model_selection import train_test_split
 
 from config import (
+    CALIBRATION_TABLE_NAME,
     DATABASE_PATH,
     DATASET_PATH,
+    DEPARTMENT_CODE_MAP,
+    MODEL_ARTIFACT_PATH,
     OUTPUTS_DIR,
     RANDOM_SEED,
     RISK_THRESHOLDS,
     SHAP_FEATURE_TABLE_NAME,
     SHAP_INSIGHTS_PATH,
     SQL_TABLE_NAME,
+    SURVIVAL_CURVE_TABLE_NAME,
 )
 
 
-FEATURE_COLUMNS = ["Tenure_Months", "Base_Salary", "Dept_Code"]
+FEATURE_COLUMNS = ["Tenure_Months", "Base_Salary", "Dept_Code", "Manager_Tenure_Months"]
+SURVIVAL_FEATURE_COLUMNS = ["Base_Salary", "Dept_Code", "Manager_Tenure_Months"]
 SHAP_EXPLANATION_LIMIT = 1_200
 FEATURE_METADATA = {
     "Tenure_Months": {
@@ -39,6 +49,11 @@ FEATURE_METADATA = {
         "label": "Department",
         "shap_column": "SHAP_Department_Impact",
         "insight": "How department-level risk patterns influence the score.",
+    },
+    "Manager_Tenure_Months": {
+        "label": "Manager tenure",
+        "shap_column": "SHAP_Manager_Tenure_Impact",
+        "insight": "How manager relationship maturity changes the score.",
     },
 }
 
@@ -75,7 +90,7 @@ def prepare_model_frame(df: pd.DataFrame) -> pd.DataFrame:
     This helper keeps that translation in one small, auditable place.
     """
     model_df = df.copy()
-    model_df["Dept_Code"] = model_df["Department"].astype("category").cat.codes
+    model_df["Dept_Code"] = model_df["Department"].map(DEPARTMENT_CODE_MAP)
     model_df["Target"] = (model_df["Voluntary_Turnover"] == "Yes").astype(int)
     return model_df
 
@@ -89,13 +104,63 @@ def train_model(feature_frame: pd.DataFrame, target: pd.Series) -> RandomForestC
     x_resampled, y_resampled = smote.fit_resample(feature_frame, target)
 
     model = RandomForestClassifier(
-        n_estimators=150,
+        n_estimators=120,
         random_state=RANDOM_SEED,
         class_weight="balanced_subsample",
         n_jobs=-1,
     )
     model.fit(x_resampled, y_resampled)
     return model
+
+
+def persist_model_artifact(model: RandomForestClassifier) -> None:
+    """Save the trained model and feature metadata for live dashboard scoring."""
+    joblib.dump(
+        {
+            "model": model,
+            "feature_columns": FEATURE_COLUMNS,
+            "department_code_map": DEPARTMENT_CODE_MAP,
+        },
+        MODEL_ARTIFACT_PATH,
+    )
+
+
+def build_calibration_table(
+    feature_frame: pd.DataFrame,
+    target: pd.Series,
+) -> pd.DataFrame:
+    """Train a holdout model and return calibration bins for dashboard QA.
+
+    The production model is still trained on all rows. This separate holdout
+    pass exists only to answer the interviewer/executive question: "are these
+    probabilities well calibrated?"
+    """
+    x_train, x_test, y_train, y_test = train_test_split(
+        feature_frame,
+        target,
+        test_size=0.25,
+        random_state=RANDOM_SEED,
+        stratify=target,
+    )
+    calibration_model = train_model(x_train, y_train)
+    predicted_probabilities = calibration_model.predict_proba(x_test)[:, 1]
+    observed_rate, mean_predicted = calibration_curve(
+        y_test,
+        predicted_probabilities,
+        n_bins=10,
+        strategy="quantile",
+    )
+    brier_score = brier_score_loss(y_test, predicted_probabilities)
+
+    return pd.DataFrame(
+        {
+            "Bin": range(1, len(mean_predicted) + 1),
+            "Mean_Predicted_Probability": mean_predicted,
+            "Observed_Turnover_Rate": observed_rate,
+            "Brier_Score": brier_score,
+            "Holdout_Employee_Count": len(x_test),
+        }
+    )
 
 
 def extract_positive_class_shap_values(raw_shap_values: object) -> np.ndarray:
@@ -215,15 +280,88 @@ def build_feature_impact_table(shap_values: np.ndarray, sample_size: int) -> pd.
     return pd.DataFrame(rows).sort_values("Mean_ABS_SHAP", ascending=False)
 
 
+def fit_cox_survival_model(model_df: pd.DataFrame) -> CoxPHFitter:
+    """Fit a Cox proportional hazards model for time-to-turnover analysis."""
+    survival_training_frame = model_df[
+        ["Tenure_Months", "Target", *SURVIVAL_FEATURE_COLUMNS]
+    ].rename(columns={"Target": "Event"})
+
+    # A small penalizer keeps the synthetic demo stable when one department has
+    # a strong signal. This is common practice for production survival models.
+    cox_model = CoxPHFitter(penalizer=0.1)
+    cox_model.fit(
+        survival_training_frame,
+        duration_col="Tenure_Months",
+        event_col="Event",
+        show_progress=False,
+    )
+    return cox_model
+
+
+def add_survival_predictions(
+    predictions: pd.DataFrame,
+    model_df: pd.DataFrame,
+    cox_model: CoxPHFitter,
+) -> pd.DataFrame:
+    """Add Cox survival predictions to the scored employee table."""
+    enriched = predictions.copy()
+    covariates = model_df[SURVIVAL_FEATURE_COLUMNS]
+
+    median_tenure = cox_model.predict_median(covariates)
+    finite_median = pd.Series(median_tenure, index=enriched.index).replace([np.inf, -np.inf], np.nan)
+    fallback_tenure = float(enriched["Tenure_Months"].max() + 24)
+    enriched["Cox_Median_Expected_Tenure_Months"] = finite_median.fillna(fallback_tenure)
+
+    twelve_month_survival = cox_model.predict_survival_function(covariates, times=[12]).T.iloc[:, 0]
+    enriched["Cox_12_Month_Survival_Probability"] = twelve_month_survival.to_numpy()
+    return enriched
+
+
+def build_survival_curve_table(
+    predictions: pd.DataFrame,
+    model_df: pd.DataFrame,
+    cox_model: CoxPHFitter,
+) -> pd.DataFrame:
+    """Create cohort survival curves for High, Medium, and Low risk bands."""
+    rows = []
+    times = np.arange(1, 73, 3)
+    for risk_level in ("High Risk", "Medium Risk", "Low Risk"):
+        cohort_index = predictions.index[predictions["Risk_Level"] == risk_level]
+        if len(cohort_index) == 0:
+            continue
+        sample_index = (
+            pd.Index(cohort_index)
+            .to_series()
+            .sample(n=min(500, len(cohort_index)), random_state=RANDOM_SEED)
+            .index
+        )
+        survival_frame = cox_model.predict_survival_function(
+            model_df.loc[sample_index, SURVIVAL_FEATURE_COLUMNS],
+            times=times,
+        )
+        average_survival = survival_frame.mean(axis=1)
+        for month, probability in average_survival.items():
+            rows.append(
+                {
+                    "Risk_Level": risk_level,
+                    "Month": int(month),
+                    "Survival_Probability": float(probability),
+                }
+            )
+
+    return pd.DataFrame(rows)
+
+
 def build_predictions_with_explanations(
     df: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Train the model, score employees, and create SHAP explanation artifacts."""
     model_df = prepare_model_frame(df)
     feature_frame = model_df[FEATURE_COLUMNS]
     target = model_df["Target"]
 
     model = train_model(feature_frame, target)
+    persist_model_artifact(model)
 
     # `predict_proba` returns two columns: probability of class 0 and class 1.
     # Class 1 means voluntary turnover, so column index 1 is the flight-risk score.
@@ -235,7 +373,12 @@ def build_predictions_with_explanations(
     shap_values = calculate_shap_values(model, feature_frame.loc[explained_index])
     predictions = add_employee_explanations(predictions, shap_values, explained_index)
     feature_impact = build_feature_impact_table(shap_values, len(explained_index))
-    return predictions, feature_impact
+    calibration_table = build_calibration_table(feature_frame, target)
+
+    cox_model = fit_cox_survival_model(model_df)
+    predictions = add_survival_predictions(predictions, model_df, cox_model)
+    survival_curve_table = build_survival_curve_table(predictions, model_df, cox_model)
+    return predictions, feature_impact, calibration_table, survival_curve_table
 
 
 def build_predictions(df: pd.DataFrame) -> pd.DataFrame:
@@ -244,7 +387,7 @@ def build_predictions(df: pd.DataFrame) -> pd.DataFrame:
     This compatibility wrapper preserves the older public function contract for
     notebooks or scripts that only need the scored employee table.
     """
-    predictions, _ = build_predictions_with_explanations(df)
+    predictions, _, _, _ = build_predictions_with_explanations(df)
     return predictions
 
 
@@ -296,11 +439,18 @@ def write_shap_insights(
     SHAP_INSIGHTS_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def save_model_outputs(predictions: pd.DataFrame, feature_impact: pd.DataFrame) -> None:
-    """Write model outputs and SHAP feature impact to SQLite."""
+def save_model_outputs(
+    predictions: pd.DataFrame,
+    feature_impact: pd.DataFrame,
+    calibration_table: pd.DataFrame,
+    survival_curve_table: pd.DataFrame,
+) -> None:
+    """Write model, SHAP, calibration, and survival outputs to SQLite."""
     with sqlite3.connect(DATABASE_PATH) as conn:
         predictions.to_sql(SQL_TABLE_NAME, conn, if_exists="replace", index=False)
         feature_impact.to_sql(SHAP_FEATURE_TABLE_NAME, conn, if_exists="replace", index=False)
+        calibration_table.to_sql(CALIBRATION_TABLE_NAME, conn, if_exists="replace", index=False)
+        survival_curve_table.to_sql(SURVIVAL_CURVE_TABLE_NAME, conn, if_exists="replace", index=False)
 
 
 def save_predictions(df: pd.DataFrame) -> None:
@@ -312,8 +462,10 @@ def save_predictions(df: pd.DataFrame) -> None:
 def main() -> None:
     """Run the full modeling step from CSV input to SQLite and SHAP outputs."""
     print("Loading workforce data...")
-    predictions, feature_impact = build_predictions_with_explanations(load_dataset())
-    save_model_outputs(predictions, feature_impact)
+    predictions, feature_impact, calibration_table, survival_curve_table = (
+        build_predictions_with_explanations(load_dataset())
+    )
+    save_model_outputs(predictions, feature_impact, calibration_table, survival_curve_table)
     write_shap_insights(predictions, feature_impact)
     print(
         f"Saved {len(predictions):,} employee risk scores to "
@@ -321,8 +473,13 @@ def main() -> None:
     )
     print(
         f"Saved SHAP feature impact to {DATABASE_PATH.name}:{SHAP_FEATURE_TABLE_NAME} "
-        f"and {SHAP_INSIGHTS_PATH}."
+        f"and outputs/{SHAP_INSIGHTS_PATH.name}."
     )
+    print(
+        f"Saved calibration bins to {DATABASE_PATH.name}:{CALIBRATION_TABLE_NAME} "
+        f"and survival curves to {DATABASE_PATH.name}:{SURVIVAL_CURVE_TABLE_NAME}."
+    )
+    print(f"Saved live scoring model artifact to {MODEL_ARTIFACT_PATH.name}.")
 
 
 if __name__ == "__main__":

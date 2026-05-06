@@ -11,6 +11,11 @@ from config import DATASET_PATH, RANDOM_SEED
 EMPLOYEE_COUNT = 5_000
 DEPARTMENTS = ("Manufacturing", "Engineering", "Sales")
 DEPARTMENT_WEIGHTS = (0.60, 0.25, 0.15)
+MANAGER_POOLS = {
+    "Manufacturing": range(20_100, 20_145),
+    "Engineering": range(30_100, 30_124),
+    "Sales": range(40_100, 40_116),
+}
 
 EXIT_NOTES = (
     "The hiring volume is intense, and trainer availability is limited.",
@@ -32,6 +37,12 @@ def build_workforce(seed: int = RANDOM_SEED, rows: int = EMPLOYEE_COUNT) -> pd.D
     """
     rng = np.random.default_rng(seed)
 
+    manager_tenure_by_id = {
+        manager_id: int(rng.integers(3, 72))
+        for manager_ids in MANAGER_POOLS.values()
+        for manager_id in manager_ids
+    }
+
     # First create the stable facts about each employee. These are the same
     # kinds of fields an HRIS export would normally contain.
     df = pd.DataFrame(
@@ -42,14 +53,26 @@ def build_workforce(seed: int = RANDOM_SEED, rows: int = EMPLOYEE_COUNT) -> pd.D
             "Base_Salary": rng.integers(60_000, 150_000, rows),
         }
     )
+    df["Manager_ID"] = [
+        int(rng.choice(tuple(MANAGER_POOLS[department])))
+        for department in df["Department"]
+    ]
+    df["Manager_Tenure_Months"] = df["Manager_ID"].map(manager_tenure_by_id)
 
     new_manufacturing_hire = (
         (df["Department"] == "Manufacturing") & (df["Tenure_Months"] < 6)
     )
+    new_manager = df["Manager_Tenure_Months"] < 12
 
     # The synthetic signal makes early-tenure manufacturing employees more
-    # likely to leave, giving the ML model a realistic pattern to learn.
+    # likely to leave. New manager relationships add a second signal for the
+    # manager-risk rollup without requiring real HR data.
     turnover_probability = np.where(new_manufacturing_hire, 0.70, 0.10)
+    turnover_probability = np.clip(
+        turnover_probability + np.where(new_manager, 0.08, 0.0),
+        0.02,
+        0.90,
+    )
     df["Voluntary_Turnover"] = np.where(
         rng.random(rows) < turnover_probability, "Yes", "No"
     )

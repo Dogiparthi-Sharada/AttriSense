@@ -8,7 +8,9 @@ exit_code=0
 $ python.exe train_retention_risk_model.py
 Loading workforce data...
 Saved 5,000 employee risk scores to hr_enterprise.db:workforce_predictions.
-Saved SHAP feature impact to hr_enterprise.db:shap_feature_impact and C:\Users\shara\Documents\Codex\2026-05-06\clone-this-repo-change-the-name\AttriSense\outputs\shapInsights.txt.
+Saved SHAP feature impact to hr_enterprise.db:shap_feature_impact and outputs/shapInsights.txt.
+Saved calibration bins to hr_enterprise.db:model_calibration and survival curves to hr_enterprise.db:survival_curves.
+Saved live scoring model artifact to attrisense_model.joblib.
 exit_code=0
 
 Skipped optional build_exit_interview_vector_index.py in this capture because it requires OPENAI_API_KEY.

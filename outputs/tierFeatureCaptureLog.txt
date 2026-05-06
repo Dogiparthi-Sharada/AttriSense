@@ -1,0 +1,11 @@
+AttriSense Tier 1 and Tier 2 Dashboard Capture
+==============================================
+
+Source URL: http://127.0.0.1:8503/
+assets/decisionToolsDashboard.png - What-If Simulator - 93363 bytes
+assets/managerRiskRollup.png - Manager-Level Risk Rollup - 138617 bytes
+assets/costCalculator.png - Cost-of-Attrition Calculator - 90938 bytes
+assets/survivalCalibrationDashboard.png - Cox Survival and Calibration - 157928 bytes
+assets/ethicsDashboard.png - Limitations and Ethics - 120948 bytes
+
+Captured after implementing Week 3 Tier 1 and Tier 2 features.
