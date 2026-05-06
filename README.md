@@ -1,4 +1,4 @@
-# Lumentum HR AI System
+# AttriSense
 
 An AI-powered workforce analytics platform combining predictive modeling, natural language querying, and interactive visualization for proactive HR management.
 
