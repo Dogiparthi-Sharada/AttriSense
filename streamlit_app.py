@@ -18,6 +18,22 @@ from config import (
 )
 from natural_language_sql import query_database_with_ai
 
+# ---- Pixel pastel palette injection ----
+import plotly.express as _px_pastel_inject
+import plotly.io as _pio_pastel_inject
+_PASTEL_SEQ = ["#B8B5E1", "#F5C4A0", "#B5D4A8", "#F2A8A0", "#F5E1A0", "#A8D5C8", "#D8C4E1"]
+_px_pastel_inject.defaults.color_discrete_sequence = _PASTEL_SEQ
+_px_pastel_inject.defaults.color_continuous_scale = [
+    [0.0, "#FBF7F2"], [0.25, "#F5E1A0"], [0.5, "#F5C4A0"],
+    [0.75, "#F2A8A0"], [1.0, "#B8B5E1"],
+]
+try:
+    _pio_pastel_inject.templates.default = "simple_white"
+except Exception:
+    pass
+# ---- end injection ----
+
+
 
 SHAP_COLUMNS = [
     "SHAP_Tenure_Impact",
@@ -541,8 +557,8 @@ def render_shap_explainability(
             orientation="h",
             color="Direction",
             color_discrete_map={
-                "Increases risk": "#d64550",
-                "Reduces risk": "#1f9d75",
+                "Increases risk": "#D88B83",
+                "Reduces risk": "#7AAA6E",
             },
             title="Employee-level SHAP contribution",
         )
@@ -738,7 +754,7 @@ with tab1:
                     labels=risk_counts.index,
                     values=risk_counts.values,
                     hole=0.4,
-                    marker=dict(colors=["#EF553B", "#FFA15A", "#00CC96"]),
+                    marker=dict(colors=["#F2A8A0", "#F5C4A0", "#B5D4A8"]),
                     textposition="inside",
                     textinfo="label+percent",
                     hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>",
@@ -773,7 +789,7 @@ with tab1:
                 go.Bar(
                     x=merged["Department"],
                     y=merged["Count"],
-                    marker=dict(color=["#FF6B6B", "#4ECDC4", "#45B7D1"]),
+                    marker=dict(color=["#F2A8A0", "#A8D5C8", "#B8B5E1"]),
                     text=merged["Count"],
                     textposition="auto",
                     hovertemplate="<b>%{x}</b><br>High Risk: %{y}<extra></extra>",
@@ -802,19 +818,19 @@ with tab1:
                 name="High Risk",
                 x=risk_by_dept.index,
                 y=risk_by_dept.get("High Risk", 0),
-                marker_color="#EF553B",
+                marker_color="#F2A8A0",
             ),
             go.Bar(
                 name="Medium Risk",
                 x=risk_by_dept.index,
                 y=risk_by_dept.get("Medium Risk", 0),
-                marker_color="#FFA15A",
+                marker_color="#F5C4A0",
             ),
             go.Bar(
                 name="Low Risk",
                 x=risk_by_dept.index,
                 y=risk_by_dept.get("Low Risk", 0),
-                marker_color="#00CC96",
+                marker_color="#B5D4A8",
             ),
         ]
     )
@@ -878,7 +894,7 @@ with tab2:
                 "Flight_Risk_Probability": "Risk Probability",
                 "count": "Number of Employees",
             },
-            color_discrete_sequence=["#EF553B"],
+            color_discrete_sequence=["#F2A8A0"],
         )
         st.plotly_chart(fig_risk_dist, width="stretch")
 
@@ -932,9 +948,9 @@ with tab2:
             hover_data=["Department"],
             title="Tenure vs Flight Risk Probability",
             color_discrete_map={
-                "High Risk": "#EF553B",
-                "Medium Risk": "#FFA15A",
-                "Low Risk": "#00CC96",
+                "High Risk": "#F2A8A0",
+                "Medium Risk": "#F5C4A0",
+                "Low Risk": "#B5D4A8",
             },
             labels={
                 "Tenure_Months": "Tenure (Months)",
@@ -964,9 +980,9 @@ with tab2:
             color="Risk_Level",
             title="Salary Distribution by Department & Risk Level",
             color_discrete_map={
-                "High Risk": "#EF553B",
-                "Medium Risk": "#FFA15A",
-                "Low Risk": "#00CC96",
+                "High Risk": "#F2A8A0",
+                "Medium Risk": "#F5C4A0",
+                "Low Risk": "#B5D4A8",
             },
             labels={"Base_Salary": "Annual Salary ($)", "Department": "Department"},
         )

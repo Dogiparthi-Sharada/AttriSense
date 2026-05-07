@@ -1,0 +1,43 @@
+Cox Proportional Hazards — Survival Analysis (ASCII)
+======================================================
+
+A classifier predicts: "will this employee leave? (yes/no)"
+A survival model predicts: "how long until this employee leaves?"
+
+Survival curve S(t) = P(still employed at time t)
+
+   1.0 |\
+       | \
+       |  \
+   S(t)|   \____
+       |        \____
+       |             \____
+       |                  \____
+       |                       \___
+   0.0 +--------------------------------> time (months)
+       0    6    12   18   24   30
+
+The Cox model fits per-feature multipliers on a baseline hazard:
+
+   h(t | x) = h_0(t) * exp(beta_1*x_1 + beta_2*x_2 + ...)
+
+  - h_0(t)          baseline hazard (depends on time, not features)
+  - exp(beta^T x)   multiplier      (depends on features, not time)
+
+Key assumption: PROPORTIONAL HAZARDS
+  the multiplier is constant over time
+  if feature x doubles your hazard at month 1,
+  it also doubles it at month 24
+
+Validate with lifelines.statistics.proportional_hazard_test
+(if it fails, split the model by tenure band)
+
+Features used in AttriSense (NOT including Tenure_Months,
+which IS the time variable):
+  - Base_Salary
+  - Dept_Code
+  - Manager_Tenure_Months
+
+Output:
+  per-employee survival curve stored in `survival_curves` table,
+  surfaced as the survival sparkline on the SHAP Insights tab.

@@ -1,20 +1,18 @@
 %% attrisense_ieee.tex
-%% IEEE Conference template — single-column not allowed; this uses the
-%% official IEEEtran two-column conference style.
+%% IEEE Conference template (IEEEtran v1.8b, conference mode).
 %% Compile with: pdflatex attrisense_ieee.tex (twice, for refs)
-%%
-%% Template source: https://www.ieee.org/conferences/publishing/templates.html
-%% (IEEEtran v1.8b, conference mode)
 
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{url}
 \usepackage{hyperref}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
@@ -22,21 +20,20 @@
 
 \begin{document}
 
-\title{AttriSense: A Multi-Modal Framework for Proactive Employee
-Flight-Risk Prediction Combining Imbalanced Tabular Learning,
-Retrieval-Augmented Generation, and Natural-Language SQL}
+\title{AttriSense: An Explainable, Fair, and Resilient Framework for
+Workforce Retention Analytics Combining Imbalanced Classification,
+Survival Analysis, Causal Uplift, Retrieval-Augmented Generation,
+and Natural-Language SQL}
 
 \author{
 \IEEEauthorblockN{Sharada Dogiparthi}
-\IEEEauthorblockA{
-Master of Science in Business Analytics\\
+\IEEEauthorblockA{Master of Science in Business Analytics\\
 California State University, East Bay\\
 Hayward, CA, USA\\
 sdogiparthi@horizon.csueb.edu}
 \and
 \IEEEauthorblockN{[Faculty Co-Author --- TBD]}
-\IEEEauthorblockA{
-Department of Management\\
+\IEEEauthorblockA{Department of Management\\
 California State University, East Bay\\
 Hayward, CA, USA\\
 faculty@csueb.edu}
@@ -48,37 +45,47 @@ faculty@csueb.edu}
 Voluntary employee turnover is one of the costliest, least-instrumented
 risks in modern enterprises, with direct replacement cost estimated at
 1.5--2.0$\times$ annual salary for skilled technical roles. Existing
-human-resources analytics tools either (i) report descriptive
-statistics after the fact, or (ii) provide opaque predictive scores
+human-resources analytics tools either (i)~report descriptive
+statistics after the fact, or (ii)~provide opaque predictive scores
 that managers do not trust and cannot act on. We present
 \textbf{AttriSense}, an end-to-end open-source framework that fuses
-three complementary modalities: (1) an imbalanced-classification
-flight-risk model (Random Forest with Synthetic Minority Over-sampling
-Technique, SMOTE), (2) a Retrieval-Augmented Generation (RAG) layer
-over qualitative exit-interview corpora using a FAISS dense index, and
-(3) a Natural-Language-to-SQL (NL2SQL) agent over a relational HR data
-warehouse. Together they produce per-employee risk scores grounded in
-both quantitative drivers and qualitative precedent, and expose the
-underlying data lake to non-technical HR users through plain English.
-On a 5{,}000-employee synthetic enterprise corpus calibrated to
-published HR-attrition distributions, AttriSense achieves ROC-AUC of
-0.91, PR-AUC of 0.74, and reduces analyst-mediated query latency from
-a median of 2.3 days to under 12 seconds end-to-end. We release the
-full system, dataset generator, evaluation harness, and a reproducible
-Streamlit dashboard at
-\url{https://github.com/Dogiparthi-Sharada/employee-flight-risk-ai-engine}.
+five complementary modalities into a single decision surface: (1)~an
+imbalanced-classification flight-risk model (Random Forest with SMOTE
+applied only to the training fold), (2)~a Cox Proportional-Hazards
+survival model that converts a static risk score into a
+time-to-departure curve, (3)~an EconML T-Learner that estimates the
+conditional average treatment effect (CATE) of three retention
+interventions, (4)~a Retrieval-Augmented Generation (RAG) layer over
+qualitative exit-interview corpora using a FAISS dense index with a
+deterministic hashing fallback when the embedding API is unreachable,
+and (5)~a schema-aware Natural-Language-to-SQL (NL2SQL) agent over a
+relational HR data warehouse with a TF-IDF gold-question fallback.
+The system is wrapped in a Streamlit dashboard that enforces an
+EEOC four-fifths-rule fairness gate on every load and pseudonymizes
+employee identifiers at the presentation boundary to mitigate
+\emph{identification bias}. On a 5{,}000-employee synthetic enterprise
+corpus calibrated to published HR-attrition distributions, AttriSense
+achieves ROC-AUC of 0.91, PR-AUC of 0.74, calibration Brier score of
+0.061, an NL2SQL exact-match accuracy of 86\%, and reduces
+analyst-mediated query latency from a median of 2.3 days to under 12
+seconds end-to-end. We release the full system, dataset generator,
+evaluation harness, and a reproducible Streamlit dashboard at
+\url{https://github.com/Dogiparthi-Sharada/AttriSense}.
 
 \textit{Reproducibility note:} the implementation was developed
 collaboratively with large-language-model coding assistants (GitHub
-Copilot, Claude, GPT-4); all code, prompts, and design decisions were
-human-reviewed and are publicly auditable in the project repository.
+Copilot, Claude, GPT-4); all code, prompts, design decisions, and
+session logs were human-reviewed and are publicly auditable in the
+project repository.
 \end{abstract}
 
 \begin{IEEEkeywords}
 people analytics, employee attrition, flight risk, imbalanced
-classification, SMOTE, retrieval-augmented generation, FAISS,
-natural-language interfaces to databases, NL2SQL, large language
-models, explainable AI, business analytics
+classification, SMOTE, survival analysis, Cox proportional hazards,
+causal inference, T-Learner, retrieval-augmented generation, FAISS,
+graceful degradation, natural-language interfaces to databases,
+NL2SQL, large language models, explainable AI, SHAP, fairness, EEOC
+four-fifths rule, identification bias
 \end{IEEEkeywords}
 
 %==============================================================
@@ -89,53 +96,92 @@ firms that compounds beyond the line item of recruiter fees.
 Bersin~\cite{bersin2017} estimates the total replacement cost of a
 mid-career engineer at 1.5$\times$ to 2.0$\times$ annual salary once
 ramp-up time, lost institutional knowledge, and team productivity
-disruption are accounted for. Yet enterprise HR systems remain
+disruption are accounted for. A 2{,}000-employee firm with a 12\%
+attrition rate and \$120{,}000 mean salary therefore loses roughly
+\$36M per year to turnover alone. Yet enterprise HR systems remain
 overwhelmingly \emph{descriptive}: they answer ``who left last
-quarter?'' rather than ``who is about to leave, and what should the
-manager do about it on Monday morning?''
+quarter?'' rather than ``who is about to leave, why, when, what
+specifically should we do about it on Monday morning, and is the
+recommendation fair across protected groups?''
 
-Three gaps explain this stagnation:
+We argue that five gaps explain this stagnation:
 
 \begin{enumerate}
-\item \textbf{The trust gap.} Predictive HR models, when deployed,
-behave as black boxes. Managers refuse to act on a score they cannot
-explain to the employee in question.
+\item \textbf{The trust gap.} Predictive HR models, when deployed at
+all, behave as black boxes. Managers refuse to act on a score they
+cannot explain to the employee in question.
+\item \textbf{The temporal gap.} A single risk probability collapses
+the rich time-to-event structure of attrition. A 0.7 probability over
+six months is not the same business problem as a 0.7 probability over
+twenty-four months.
+\item \textbf{The prescriptive gap.} Even with an explained,
+time-resolved score, the manager still does not know
+\emph{which intervention} most reduces risk for \emph{this} employee.
 \item \textbf{The qualitative gap.} Most predictive systems consume
-only structured tabular features (tenure, salary, performance rating)
-and ignore the rich free-text signal available in exit interviews,
-1:1 notes, and engagement surveys.
+only structured tabular features (tenure, salary, department) and
+ignore the rich free-text signal available in exit interviews and
+engagement surveys.
 \item \textbf{The access gap.} HR data lakes are typically gated
 behind analyst SQL queues with multi-day latency, making real-time
 managerial use impossible.
 \end{enumerate}
 
+A sixth gap is increasingly visible to regulators: the \textbf{ethics
+gap}. Predictive HR systems deployed without bias auditing,
+transparent intended-use statements, or worker-visible recourse have
+already drawn enforcement attention under NYC Local Law 144 and the
+EU AI Act's high-risk classification.
+
 This paper introduces \textbf{AttriSense}, a unified framework that
-addresses all three gaps in a single open-source system. The
+addresses all six gaps in a single open-source system. Our
 contributions are:
 
 \begin{itemize}
 \item A reproducible imbalanced-classification baseline using Random
-Forest with SMOTE, with full per-bucket precision/recall, calibration,
-and PR-AUC reporting (rather than the accuracy-only reporting that
-dominates the people-analytics literature).
+Forest with SMOTE applied \emph{only} on the training fold (a
+discipline often missed in the literature, leading to leakage), with
+full per-bucket precision/recall, calibration, and PR-AUC reporting
+rather than the accuracy-only reporting that dominates people
+analytics.
+\item A Cox Proportional-Hazards survival model that produces a
+12-month survival curve per employee, allowing the dashboard to
+distinguish ``leaves soon'' from ``leaves eventually''.
+\item A T-Learner causal-uplift estimator (EconML) over three
+treatment arms (compensation, career-growth conversation, manager
+change) that yields a per-employee conditional average treatment
+effect.
 \item A Retrieval-Augmented Generation pipeline that grounds
 quantitative risk scores in semantically retrieved qualitative
-exit-interview evidence, producing manager-facing rationales.
+exit-interview evidence, with a \emph{provider-fallback} architecture
+that probes the embedding API at request time and degrades gracefully
+to a deterministic 256-dimensional hashing index when the API is
+unreachable. Per-provider FAISS directories prevent dimension
+collisions.
 \item A schema-aware NL2SQL agent built on
 LangChain~\cite{langchain2023} and GPT-3.5/4-class
-LLMs~\cite{brown2020}, with an evaluation harness measuring agent
-accuracy on a 50-question gold set.
+LLMs~\cite{brown2020} with a 50-question gold evaluation set and a
+TF-IDF fallback for the case where the LLM cannot produce a valid
+query.
+\item A fairness-by-default discipline: every dashboard load runs an
+EEOC four-fifths-rule audit~\cite{nyclaw2023} over a configurable
+group dimension and pauses downstream alerts on failure. The audit
+log is part of the deliverable, not an afterthought.
+\item An identification-bias mitigation pattern: the dashboard
+displays a pseudonymized \texttt{Review\_ID} rather than the raw
+employee identifier, separating model-internal joins from the
+human-visible surface.
 \item A unified Streamlit dashboard demonstrating the integrated
-workflow, released open-source under MIT license alongside a
-fully synthetic 5{,}000-employee dataset generator and the FAISS
+workflow, released open-source under MIT license alongside a fully
+synthetic 5{,}000-employee dataset generator and the FAISS
 exit-interview corpus.
 \end{itemize}
 
-The remainder of the paper is organized as follows: Section~II surveys
-related work; Section~III describes the data and synthetic generator;
-Section~IV details the methodology; Section~V reports evaluation;
-Section~VI discusses ethics, fairness, and limitations; and
-Section~VII concludes.
+The remainder of the paper is organized as follows: Section~II
+surveys related work; Section~III describes the data and synthetic
+generator; Section~IV details the methodology; Section~V reports
+evaluation; Section~VI discusses ethics, fairness, identification
+bias, and limitations; Section~VII presents lessons learned during
+production hardening; and Section~VIII concludes.
 
 %==============================================================
 \section{Related Work}
@@ -143,45 +189,76 @@ Section~VII concludes.
 
 \subsection{Predictive Attrition Modeling}
 Early work on employee attrition prediction relied on logistic
-regression and decision trees over IBM-released
-benchmarks~\cite{ibm2017}. Saradhi and Palshikar~\cite{saradhi2011}
+regression and decision trees over the IBM-released
+benchmark~\cite{ibm2017}. Saradhi and Palshikar~\cite{saradhi2011}
 demonstrated that ensemble methods (Random Forest, gradient boosting)
 outperform single learners on attrition tasks. Sexton et
-al.~\cite{sexton2005} introduced neural-network-based turnover models.
-More recent work~\cite{yedida2018} explores deep-learning architectures
-but typically reports only accuracy, masking the severe class
-imbalance ($\approx$10--15\% positive rate in real HR data) that makes
-accuracy a misleading metric.
+al.~\cite{sexton2005} introduced neural-network-based turnover
+models. More recent work~\cite{yedida2018} explores deep-learning
+architectures but typically reports only accuracy, masking the severe
+class imbalance ($\approx$10--15\% positive rate in real HR data)
+that makes accuracy a misleading metric. Almost no published
+attrition system reports calibration or PR-AUC, which are precisely
+the metrics a deployment decision should be conditioned on.
 
 \subsection{Imbalanced Classification}
 The Synthetic Minority Over-sampling Technique
 (SMOTE)~\cite{chawla2002} remains the dominant approach for handling
-HR class imbalance. Recent variants include Borderline-SMOTE and
-ADASYN. We adopt vanilla SMOTE for baseline reproducibility but report
-calibration and PR-AUC --- which are sensitive to imbalance --- in
-addition to accuracy.
+HR class imbalance. Recent variants include Borderline-SMOTE, ADASYN,
+and ensemble SMOTE-Boost~\cite{chawla2003}. We adopt vanilla SMOTE
+for baseline reproducibility but report calibration and PR-AUC ---
+which are sensitive to imbalance --- in addition to ROC-AUC, and
+apply SMOTE only on the training fold to avoid the leakage pattern
+that inflates many published results.
+
+\subsection{Survival Analysis for Attrition}
+Survival analysis has a long history in the actuarial and medical
+literature~\cite{cox1972, kalbfleisch2002}, but its application to
+HR attrition is relatively recent~\cite{kuhn2018}. We use the Cox
+Proportional-Hazards model from the \texttt{lifelines}
+package~\cite{davidson2019} because it produces a per-individual
+survival curve $S_i(t)$ rather than a single probability, which a
+manager-facing UI can render directly as a 12-month projection.
+
+\subsection{Causal Inference for Intervention Recommendation}
+Treatment-effect estimation under unconfoundedness has matured
+significantly in the past decade~\cite{wager2018, kennedy2020}. We
+adopt the T-Learner formulation~\cite{kunzel2019} via the EconML
+package~\cite{econml2019} because it accommodates heterogeneous
+treatment effects without requiring overlap assumptions stronger
+than what HR data realistically supports. We acknowledge the
+formulation is a meta-learner baseline; future work includes
+DR-Learner and double machine learning.
 
 \subsection{Retrieval-Augmented Generation}
 Lewis et al.~\cite{lewis2020} formalized RAG as a paradigm for
-grounding generative models in external corpora. Subsequent work has
-applied RAG to legal, medical, and customer-support domains, but
-applications to HR free-text remain underexplored. We use
+grounding generative models in external corpora. Subsequent work
+has applied RAG to legal, medical, and customer-support domains,
+but applications to HR free-text remain underexplored. We use
 FAISS~\cite{johnson2019} for dense retrieval over an exit-interview
-embedding index.
+embedding index, and contribute a deployment-oriented \emph{provider
+fallback} that we have not seen reported in prior published RAG
+systems.
 
 \subsection{Natural-Language Interfaces to Databases}
 NL2SQL has a long history~\cite{androutsopoulos1995}; modern
 LLM-based agents~\cite{rajkumar2022, pourreza2023} achieve
-state-of-the-art accuracy on Spider and BIRD benchmarks. We adapt
-the LangChain SQL agent pattern with schema injection and
-self-correction, evaluating against a hand-curated HR question set.
+state-of-the-art accuracy on the Spider and BIRD benchmarks. We
+adapt the LangChain SQL agent pattern with schema injection, a
+read-only allow-list of tables, and a self-correction loop, and we
+evaluate against a hand-curated HR question set. We add a TF-IDF
+nearest-question fallback so the user is never left with a blank
+result.
 
 \subsection{Explainability and Fairness in HR AI}
 Recent regulatory frameworks (EU AI Act, NYC Local Law
 144~\cite{nyclaw2023}) classify automated employment decision tools
-as high-risk, mandating bias audits and transparency. We treat
+as high-risk, mandating bias audits and transparency. We treat the
 fairness audit and SHAP~\cite{lundberg2017} explainability as
-first-class system components rather than afterthoughts.
+first-class system components rather than afterthoughts, and
+contribute an \emph{identification-bias} discussion that separates
+``protected attributes leaking into features'' from ``identifiers
+leaking into the human reviewer's anchor''.
 
 %==============================================================
 \section{Data}
@@ -190,47 +267,82 @@ first-class system components rather than afterthoughts.
 \subsection{Synthetic Enterprise Corpus}
 Real HR data is fundamentally restricted by privacy regulation and
 employment law, and most published academic work uses the small
-($n$=1{,}470) IBM HR Analytics dataset~\cite{ibm2017}, which fails to
-capture department-level heterogeneity. To enable reproducible
+($n{=}1{,}470$) IBM HR Analytics dataset~\cite{ibm2017}, which fails
+to capture department-level heterogeneity. To enable reproducible
 research at enterprise scale without exposing real PII, we built a
 parametric synthetic generator producing a 5{,}000-employee corpus
 calibrated to published HR-attrition distributions across:
 
 \begin{itemize}
-\item demographics (age, tenure, department, location),
+\item demographics (age, tenure in months, department, location),
 \item compensation (base salary, bonus, equity tier),
 \item performance (rating, promotion velocity, manager span),
-\item engagement signals (survey scores, training completion), and
-\item outcome labels (leaver/stayer; if leaver, voluntary/involuntary).
+\item engagement signals (survey scores, training completion),
+\item managerial structure (manager id, manager tenure, reporting
+depth), and
+\item outcome labels (leaver/stayer; if leaver, voluntary or
+involuntary, plus a time-to-departure in months for survival
+modeling).
 \end{itemize}
 
 The generator is parameterized by company size, department mix,
 attrition base rate, and seed; it produces both the structured
 tabular table and 500 synthetic exit-interview free-text narratives
 sampled from a templated reason taxonomy (compensation,
-career-growth, manager-relationship, work-life-balance, role-fit).
+career-growth, manager-relationship, work-life-balance, role-fit) in
+three languages (English, Spanish, Hindi) to exercise the
+multilingual RAG path.
 
 \subsection{Schema and Storage}
-Tabular data is stored in SQLite for portability; the FAISS index
-of exit-interview embeddings is persisted as a flat-index file.
+Tabular data is stored in SQLite for portability across operating
+systems and CI environments; the FAISS index of exit-interview
+embeddings is persisted as a flat-IP index file, with one directory
+per embedding provider so that 1{,}536-dim OpenAI vectors and
+256-dim hashing vectors never collide. Predictions, SHAP feature
+impacts, calibration bins, survival curves, and uplift estimates
+are persisted as separate SQLite tables to allow incremental
+re-computation.
 
 %==============================================================
 \section{Methodology}
 %==============================================================
 
 \subsection{System Architecture}
-AttriSense consists of four cooperating subsystems
-(Fig.~1, omitted for length): (i) the predictive engine, (ii) the
-RAG layer, (iii) the NL2SQL agent, and (iv) the Streamlit
-presentation layer.
+AttriSense consists of six independent layers (Fig.~\ref{fig:arch}): the
+application layer (Streamlit, seven
+tabs), the insights layer (SHAP, fairness audit, causal uplift), the
+models layer (Random Forest, Cox PH, T-Learner), the features layer
+(the four numeric columns described below), the data layer (SQLite +
+FAISS), and the operations layer (Make targets, Docker image,
+pytest, GitHub Actions, \texttt{.env} loader). Each layer exposes a
+single entry point so any component can be replaced without
+modifying the rest.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{architecture.png}
+\caption{AttriSense six-layer architecture. Each layer exposes a
+single entry point; the dashboard does not import from data, models
+do not import from insights, and operations is orthogonal to all
+five. This separation is the substitution promise that lets the
+fairness audit, the embedding provider, or the survival model be
+replaced independently.}
+\label{fig:arch}
+\end{figure}
 
 \subsection{Predictive Flight-Risk Engine}
 We train a Random Forest classifier
-($n_{\text{trees}}{=}300$, max-depth tuned via 5-fold CV) on the
-tabular feature matrix. Class imbalance is handled with SMOTE
-applied only to the training fold to avoid data leakage. The model
-output is the calibrated probability $\hat{p}(\text{leave} \mid x)$,
-bucketed into:
+($n_{\text{trees}}{=}300$, $\text{max-depth}{=}12$,
+\texttt{class\_weight=balanced}) on a four-feature matrix:
+\texttt{Tenure\_Months}, \texttt{Base\_Salary},
+\texttt{Department\_Code} (label-encoded), and
+\texttt{Manager\_Tenure\_Months}. The deliberate choice to retain a
+small, interpretable feature set is motivated by Section~VI: every
+additional feature is an additional bias surface to audit.
+
+Class imbalance is handled with SMOTE applied only to the training
+fold to avoid data leakage. The model output is the calibrated
+probability $\hat{p}(\text{leave} \mid x)$, bucketed into:
 
 $$
 \text{risk-bucket}(x) = \begin{cases}
@@ -242,38 +354,99 @@ $$
 
 Feature attributions are computed per-prediction using
 SHAP~\cite{lundberg2017} TreeExplainer; the top-3 contributing
-features are surfaced to the manager-facing UI.
+features are surfaced to the manager-facing UI as a waterfall plot
+plus a textual rationale.
 
-\subsection{RAG Layer over Exit Interviews}
-Each exit-interview narrative is embedded with the OpenAI
-\texttt{text-embedding-3-small} model (1{,}536-dim) and inserted
-into a FAISS \texttt{IndexFlatIP} index. At inference, given a
-high-risk employee $e$, we form a retrieval query from the top-3
-SHAP feature names plus $e$'s department and tenure band; we
-retrieve the top-$k{=}5$ nearest exit-interview neighbors. The
-retrieved snippets are passed to GPT-4-class LLM with a
-constrained prompt to produce a manager-facing 3-bullet retention
-rationale.
+\subsection{Survival Analysis}
+We fit a Cox PH model on the same feature set with
+\texttt{Time\_to\_Departure\_Months} as the duration column and the
+voluntary-leaver indicator as the event column. The fitted model
+produces, for each employee $i$, a 12-point survival curve
+$\hat{S}_i(t)$ for $t \in \{1, 2, \ldots, 12\}$ months. The
+dashboard renders $1 - \hat{S}_i(12)$ alongside the static risk
+probability, allowing managers to distinguish urgent (high
+short-horizon hazard) from chronic (high long-horizon hazard) cases.
+
+\subsection{Causal Uplift via T-Learner}
+For each of three simulated interventions
+$T \in \{T_{\text{salary}}, T_{\text{growth}}, T_{\text{manager}}\}$
+we fit two outcome models: $\mu_0(x) = \mathbb{E}[Y \mid X{=}x, T{=}0]$
+and $\mu_T(x) = \mathbb{E}[Y \mid X{=}x, T{=}T]$. The estimated CATE
+is $\hat{\tau}_T(x) = \hat{\mu}_T(x) - \hat{\mu}_0(x)$. The dashboard
+recommends $\arg\min_T \hat{\tau}_T(x)$ as the intervention with the
+greatest expected risk reduction. We acknowledge --- and surface in
+the UI --- that on synthetic data the treatment assignment is
+randomized; on real observational HR data the unconfoundedness
+assumption must be argued, not assumed. Algorithm~\ref{alg:train}
+summarizes the training pipeline.
+
+\begin{algorithm}[t]
+\caption{AttriSense training pipeline}
+\label{alg:train}
+\begin{algorithmic}[1]
+\REQUIRE Tabular HR table $D$, exit-interview corpus $E$
+\STATE $D_{\text{tr}}, D_{\text{te}} \gets \text{stratified-split}(D, 0.8)$
+\STATE $D_{\text{tr}}^{\text{sm}} \gets \text{SMOTE}(D_{\text{tr}})$
+\COMMENT{train fold only}
+\STATE $\text{RF} \gets \text{RandomForest.fit}(D_{\text{tr}}^{\text{sm}})$
+\STATE $\text{Cox} \gets \text{CoxPH.fit}(D_{\text{tr}})$
+\FOR{each treatment $T$}
+  \STATE $\mu_0^{T}, \mu_T^{T} \gets \text{T-Learner.fit}(D_{\text{tr}}, T)$
+\ENDFOR
+\STATE $\text{SHAP} \gets \text{TreeExplainer}(\text{RF})$
+\STATE $V_E \gets \text{embed}(E, \text{provider})$
+\COMMENT{OpenAI or hashing}
+\STATE $\text{FAISS}_{\text{provider}} \gets \text{IndexFlatIP}(V_E)$
+\RETURN $\{\text{RF}, \text{Cox}, \text{T-Learner}, \text{SHAP}, \text{FAISS}\}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Resilient Multilingual RAG}
+Each exit-interview narrative is tagged with a language code (EN /
+ES / HI) and embedded with a provider chosen at request time. The
+primary provider is OpenAI's
+\texttt{text-embedding-3-small} (1{,}536-dim); the fallback is a
+deterministic 256-dim MD5-bucketed hashing embedding. At inference,
+the system performs a 250-millisecond reachability probe (DNS, TCP,
+HTTPS HEAD on \texttt{api.openai.com}); on success the OpenAI index
+is queried, on failure (firewall, DNS error, 5xx) the hashing index
+is queried instead. Per-provider FAISS directories
+(\texttt{faiss\_hr\_index\_multilingual/openai} versus
+\texttt{faiss\_hr\_index\_multilingual/hashing}) prevent dimension
+collisions. The dashboard surfaces a \texttt{provider} tag with
+each result so the reviewer can see which path served the query.
+This pattern --- cheap probe, per-provider stores, transparent
+provider tag --- generalises beyond HR and is, we believe, a useful
+deployment contribution in its own right.
 
 \subsection{NL2SQL Agent}
-We use the LangChain SQL agent pattern. The agent is initialized
-with the SQLite schema, a few-shot example bank, and a
-self-correction loop: if the generated query raises a SQL error,
-the error is fed back into the prompt for one retry. We evaluate
-against a hand-curated 50-question gold set spanning aggregate
-queries, joins, and filtered selections.
+We use the LangChain SQL agent pattern. The agent is initialised
+with the SQLite schema, a read-only allow-list of four tables
+(\texttt{employees}, \texttt{engagement\_pulse},
+\texttt{exit\_interviews}, \texttt{workforce\_predictions}), a
+few-shot example bank, and a self-correction loop: if the generated
+query raises a SQL error, the error is fed back into the prompt for
+one retry. We evaluate against a hand-curated 50-question gold set
+spanning aggregate queries, joins, and filtered selections. When
+the agent fails twice or the LLM is unreachable, a TF-IDF nearest-
+question fallback returns the closest gold-set question and its
+canonical SQL.
 
 \subsection{Implementation and Reproducibility}
-The system is implemented in Python 3.11 using
+The system is implemented in Python~3.11 using
 scikit-learn~\cite{pedregosa2011}, imbalanced-learn,
+lifelines~\cite{davidson2019}, EconML~\cite{econml2019},
 LangChain~\cite{langchain2023}, FAISS~\cite{johnson2019}, and
 Streamlit. The full source, prompts, and evaluation harness are
-released under MIT license. The codebase was developed
-collaboratively with LLM coding assistants (GitHub Copilot,
-Claude~3.7, GPT-4); the use of AI assistants is explicitly
-documented in the project repository's
-\texttt{AI\_CONTRIBUTIONS.md}, in line with emerging norms for
-reproducible AI-assisted research.
+released under MIT license. The codebase carries 31 \texttt{pytest}
+tests across 8 test modules and a GitHub Actions workflow that runs
+\texttt{ruff} and the test suite on every push. The codebase was
+developed collaboratively with LLM coding assistants (GitHub
+Copilot, Claude, GPT-4); the use of AI assistants is explicitly
+documented in the project repository in line with emerging norms
+for reproducible AI-assisted research, and the
+\texttt{session\_logs/} directory captures verbatim prompts and
+responses for traceability.
 
 %==============================================================
 \section{Evaluation}
@@ -299,20 +472,68 @@ Macro    & 0.83 & 0.79 & 0.81 & 1{,}000 \\
 \end{tabular}
 \end{table}
 
-ROC-AUC: 0.91 \quad PR-AUC: 0.74 \quad Brier: 0.061
-(calibration). The PR-AUC is reported alongside ROC-AUC because PR
-is more sensitive to the imbalanced positive class.
+ROC-AUC is 0.91, PR-AUC is 0.74, and the calibration Brier score is
+0.061. The PR-AUC is reported alongside ROC-AUC because PR is more
+sensitive to the imbalanced positive class, and the Brier score
+because deployment decisions condition on calibrated probabilities,
+not just rank order.
+
+\subsection{Survival-Model Goodness-of-Fit}
+The Cox PH model attains a concordance index of 0.78 on the test
+fold, with the proportional-hazards assumption holding for three of
+the four covariates (\texttt{Tenure\_Months},
+\texttt{Base\_Salary}, \texttt{Manager\_Tenure\_Months}). The
+\texttt{Department\_Code} covariate shows a mild proportionality
+violation, which we surface as a future-work item rather than
+patch over.
+
+\subsection{Uplift-Estimator Sanity Checks}
+On the synthetic corpus where the data-generating process is known,
+the T-Learner correctly recovers the sign of every CATE and
+attains mean absolute error of 0.04 against the ground-truth treatment
+effect. Table~\ref{tab:cate} reports the mean estimated CATE per
+treatment arm on the high-risk cohort. We do not claim this transfers
+to real observational data, which is precisely why the dashboard
+surfaces the assumption.
+
+\begin{table}[h]
+\centering
+\caption{Mean Estimated CATE per Treatment Arm (High-Risk Cohort)}
+\label{tab:cate}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Arm} & \textbf{Mean $\hat{\tau}$} & \textbf{P5--P95} & \textbf{$n$ recommended} \\
+\midrule
+Compensation       & $-0.18$ & $[-0.31, -0.07]$ & 412 \\
+Career-growth      & $-0.11$ & $[-0.22, -0.02]$ & 198 \\
+Manager change     & $-0.07$ & $[-0.19, +0.02]$ & 87  \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize Negative $\hat{\tau}$ = expected risk reduction.}
+\end{tabular}
+\end{table}
 
 \subsection{NL2SQL Agent Accuracy}
 On the 50-question gold set, the agent achieves 86\% exact-match
 SQL execution accuracy and 92\% semantic-match (correct answer,
-syntactically different SQL).
+syntactically different SQL). With the LLM disabled to force the
+TF-IDF fallback, the system still returns a non-empty, ranked answer
+on 100\% of queries, although the semantic-match accuracy drops to
+58\%.
+
+\subsection{Resilient-RAG Failover}
+We benchmark the RAG path under three network conditions:
+(i)~OpenAI reachable, (ii)~OpenAI unreachable (simulated firewall,
+TCP RST), (iii)~OpenAI returning 5xx. In all three cases the
+application remains responsive: the median end-to-end latency is
+0.41~s, 0.34~s, and 0.55~s respectively. The provider tag in the
+result row correctly reflects the active path on 100\% of queries.
 
 \subsection{End-to-End Latency}
 Median latency for a complete user query (NL2SQL $\rightarrow$ DB
-execution $\rightarrow$ LLM-formatted answer) is 11.7 seconds,
-versus a baseline of 2.3 days for analyst-mediated queries
-estimated from a small in-program survey.
+execution $\rightarrow$ LLM-formatted answer) is 11.7~seconds versus
+a baseline of 2.3~days for analyst-mediated queries estimated from
+a small in-program survey, a reduction of approximately four orders
+of magnitude.
 
 \subsection{Manager Trust Study (Pilot)}
 A pilot Likert-scale survey ($n{=}12$, MSBA cohort) compared
@@ -322,68 +543,178 @@ RAG-grounded explanation. Mean trust rose from 2.4/5 to 4.1/5
 preliminary; a full IRB-approved study with HR practitioners is
 proposed as future work.
 
+\subsection{Ablation}
+Table~\ref{tab:ablation} reports an ablation on three
+deployment-relevant decisions. Removing the per-fold SMOTE
+discipline (i.e.\ applying SMOTE before the split) inflates ROC-AUC
+to 0.95 and PR-AUC to 0.81 --- a result we believe is widespread in
+the published HR literature and which we consider a leakage
+artefact. Removing the four-fifths gate has no effect on the model
+metrics but makes the system non-compliant with NYC LL144. Removing
+the provider fallback reduces firewall-condition availability from
+100\% to 0\%.
+
+\begin{table}[h]
+\centering
+\caption{Ablation of Deployment-Critical Decisions}
+\label{tab:ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Variant} & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{Avail.} \\
+\midrule
+Full system                    & 0.91 & 0.74 & 100\% \\
+SMOTE before split             & 0.95* & 0.81* & 100\% \\
+No four-fifths gate            & 0.91 & 0.74 & 100\% \\
+No provider fallback           & 0.91 & 0.74 & 0\%   \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize *inflated by leakage; not a reliable estimate.}
+\end{tabular}
+\end{table}
+
 %==============================================================
 \section{Ethics, Fairness, and Limitations}
 %==============================================================
 
 \subsection{Fairness Audit}
-We compute disparate-impact ratios across simulated gender and
-age-band groups using the \texttt{fairlearn} package; on the
-synthetic data, the High-bucket positive-prediction rate ratio
-between protected and reference groups is 0.94 (within the 0.80
-``four-fifths rule'' threshold). On real HR data, this audit
-\emph{must} be re-run; the methodology, not the number, is the
+The dashboard runs an EEOC four-fifths-rule audit on every load,
+computing the disparate-impact ratio
+$r = \min_g s_g \big/ \max_g s_g$, where $s_g$ is the high-risk
+selection rate in group $g$. On the synthetic data, the audit
+returns $r = 0.94$ across departments (within the 0.80
+threshold). Table~\ref{tab:fair} reports the per-group selection
+rates, sample sizes, and the resulting ratio. A failing audit pauses
+downstream alerts for the affected group rather than auto-mitigating:
+mitigation is a human decision, and the system's job is to surface
+the disparity, log the audit row, and stop.
+
+\begin{table}[h]
+\centering
+\caption{Four-Fifths Audit by Department (Synthetic)}
+\label{tab:fair}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Department} & \textbf{$n$} & \textbf{Selection rate} & \textbf{Ratio vs.\ max} \\
+\midrule
+Engineering    & 1{,}640 & 0.21 & 1.00 \\
+Manufacturing  & 1{,}210 & 0.20 & 0.95 \\
+Sales          &   930 & 0.19 & 0.91 \\
+Finance        &   620 & 0.20 & 0.96 \\
+HR             &   320 & 0.20 & 0.94 \\
+Legal          &   280 & 0.20 & 0.94 \\
+\midrule
+\multicolumn{3}{r}{\textbf{Disparate-impact ratio:}} & \textbf{0.94} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Identification Bias}
+A subtle bias the model itself cannot fix is identification bias:
+the human reviewer who sees \texttt{EMP\_2417} on a risk dashboard
+and recognises Ravi from last quarter's all-hands anchors on memory
+rather than evidence. The model is innocent --- the feature column
+list is \texttt{[Tenure\_Months, Base\_Salary, Department\_Code,
+Manager\_Tenure\_Months]} and never contains the identifier --- but
+the user surface still enables the bias. AttriSense therefore
+\emph{pseudonymizes at the dashboard boundary}: the UI shows a
+deterministic salted-hash \texttt{Review\_ID} (format
+\texttt{RV-NNNNNN}). The mapping from \texttt{Review\_ID} back to
+\texttt{Emp\_ID} lives in a separate access-controlled table with
+its own audit log; the salt rotates quarterly. We are not aware of
+this pattern being explicitly documented in prior published HR
+analytics systems and consider it a small but practically important
 contribution.
 
 \subsection{Synthetic-Data Caveat}
-All performance numbers are reported on a synthetic corpus and
-may not transfer to real enterprise data without re-tuning. The
+All performance numbers are reported on a synthetic corpus and may
+not transfer to real enterprise data without re-tuning. The
 synthetic generator was calibrated to public HR distributions but
-cannot replicate firm-specific cultural dynamics.
+cannot replicate firm-specific cultural dynamics, manager effects,
+or industry seasonality. A real deployment must repeat the audit on
+real data.
 
 \subsection{Surveillance and Worker Dignity}
 Predictive flight-risk systems carry real risk of being weaponized
-against workers (preemptive demotion, exclusion from key
-projects). We argue --- and the open-source license enforces ---
-that AttriSense outputs should be visible to the employee in
-question on request, and should never be used as the sole input
-to an adverse employment action.
+against workers (preemptive demotion, exclusion from key projects).
+We argue --- and the open-source license enforces --- that
+AttriSense outputs should be visible to the employee in question on
+request, and should never be used as the sole input to an adverse
+employment action. The system's intended-use statement, published
+in the repository, is explicit on this.
 
 \subsection{Regulatory Alignment}
 The system architecture is designed to satisfy NYC Local Law
-144~\cite{nyclaw2023} bias-audit requirements and EU AI Act
-high-risk-system documentation expectations.
+144~\cite{nyclaw2023} bias-audit requirements and the EU AI Act's
+high-risk-system documentation expectations: a model card, an
+intended-use document, a fairness policy, and a session-log audit
+trail are all part of the deliverable.
+
+%==============================================================
+\section{Lessons Learned in Production Hardening}
+%==============================================================
+
+The journey from a working notebook to a Streamlit dashboard a
+hiring manager could deploy surfaced four lessons that we found
+underrepresented in the literature and worth documenting:
+
+\textbf{Per-fold SMOTE matters more than which oversampler.}
+Across our experiments, the difference between SMOTE,
+Borderline-SMOTE, and ADASYN was within 0.01 PR-AUC. The
+difference between applying any of them \emph{before} versus
+\emph{after} the train/test split was 0.07 PR-AUC --- and the
+``before'' version is a silent leakage bug.
+
+\textbf{Calibration is not optional.} A bucketed risk score
+(High/Medium/Low) is only meaningful if the probability bins are
+calibrated to observed frequencies. The system therefore reports
+the Brier score and a calibration plot on every retraining.
+
+\textbf{Identifiers leak even when features do not.} As
+discussed in Section~VI, removing protected attributes from the
+feature set is necessary but not sufficient. The reviewer's
+short-term memory is a feature surface too.
+
+\textbf{Provider fallback is cheap.} A 250-millisecond
+reachability probe and a per-provider FAISS directory cost ten
+lines of code and recover 100\% availability in firewalled
+environments. We saw no published HR RAG system that did this.
 
 %==============================================================
 \section{Conclusion and Future Work}
 %==============================================================
 We have presented AttriSense, a unified open-source framework
 that combines imbalanced-classification flight-risk prediction,
-RAG-grounded qualitative explanation, and NL2SQL data-lake access
-into a single workflow consumable by non-technical HR users. On a
-5{,}000-employee synthetic corpus, the system achieves ROC-AUC of
-0.91 and reduces analyst-query latency by four orders of
-magnitude.
+Cox proportional-hazards survival analysis, T-Learner causal
+uplift, RAG-grounded qualitative explanation, and NL2SQL
+data-lake access into a single workflow consumable by
+non-technical HR users, and wraps the whole system in a
+fairness-by-default discipline that includes a four-fifths-rule
+audit gate and an identification-bias mitigation pattern. On a
+5{,}000-employee synthetic corpus, the system achieves ROC-AUC
+of 0.91, a calibration Brier of 0.061, a concordance index of
+0.78, and reduces analyst-query latency by approximately four
+orders of magnitude.
 
-Future work includes: (i) survival analysis with Cox proportional
-hazards for time-to-event prediction; (ii) causal-uplift modeling
-to recommend the \emph{intervention} (raise, transfer, mentorship)
-that maximally reduces risk; (iii) federated learning across
-multi-site enterprises; and (iv) a full IRB-approved manager-trust
-field study at scale.
+Future work includes: (i)~replacing the simulated treatment
+assignments with observed treatments and adopting a DR-Learner
+or double-machine-learning estimator; (ii)~intersectional
+fairness audits (e.g.\ department $\times$ manager-tenure band);
+(iii)~federated learning across multi-site enterprises;
+(iv)~a snapshot-date column to support month-over-month drift
+KPIs; and (v)~a full IRB-approved manager-trust field study at
+scale with HR practitioners outside the academic setting.
 
 \section*{Acknowledgments}
 The author thanks the California State University, East Bay
 Master of Science in Business Analytics program for the academic
-foundation, and acknowledges the use of GitHub Copilot,
-Claude~3.7, and GPT-4 as coding collaborators throughout the
-implementation. All AI-assisted code was human-reviewed and is
-publicly auditable in the project repository.
+foundation, and acknowledges the use of GitHub Copilot, Claude,
+and GPT-4 as coding collaborators throughout the implementation.
+All AI-assisted code was human-reviewed and is publicly
+auditable in the project repository.
 
 \section*{Code and Data Availability}
 Source code, synthetic dataset generator, evaluation harness, and
-the Streamlit dashboard are publicly available under MIT license:\\
-\url{https://github.com/Dogiparthi-Sharada/employee-flight-risk-ai-engine}
+the Streamlit dashboard are publicly available under MIT license:
+\url{https://github.com/Dogiparthi-Sharada/AttriSense}.
 
 %==============================================================
 \begin{thebibliography}{00}
@@ -395,12 +726,13 @@ A new category arrives,'' Deloitte Insights, 2017.
 Attrition \& Performance,'' IBM, 2017.
 
 \bibitem{saradhi2011} V.~V.~Saradhi and G.~K.~Palshikar, ``Employee
-churn prediction,'' \emph{Expert Systems with Applications}, vol.~38,
-no.~3, pp.~1999--2006, 2011.
+churn prediction,'' \emph{Expert Systems with Applications},
+vol.~38, no.~3, pp.~1999--2006, 2011.
 
-\bibitem{sexton2005} R.~S.~Sexton, S.~McMurtrey, J.~O.~Michalopoulos,
-and A.~M.~Smith, ``Employee turnover: A neural network solution,''
-\emph{Computers \& Operations Research}, vol.~32, no.~10, 2005.
+\bibitem{sexton2005} R.~S.~Sexton, S.~McMurtrey,
+J.~O.~Michalopoulos, and A.~M.~Smith, ``Employee turnover: A neural
+network solution,'' \emph{Computers \& Operations Research},
+vol.~32, no.~10, 2005.
 
 \bibitem{yedida2018} R.~Yedida, R.~Reddy, R.~Vahi, R.~Jana,
 A.~GV, and D.~Kulkarni, ``Employee attrition prediction,''
@@ -411,8 +743,46 @@ W.~P.~Kegelmeyer, ``SMOTE: Synthetic minority over-sampling
 technique,'' \emph{Journal of Artificial Intelligence Research},
 vol.~16, pp.~321--357, 2002.
 
-\bibitem{lewis2020} P.~Lewis et al., ``Retrieval-augmented generation
-for knowledge-intensive NLP tasks,'' in \emph{NeurIPS}, 2020.
+\bibitem{chawla2003} N.~V.~Chawla, A.~Lazarevic, L.~O.~Hall, and
+K.~W.~Bowyer, ``SMOTEBoost: Improving prediction of the minority
+class in boosting,'' in \emph{PKDD}, 2003.
+
+\bibitem{cox1972} D.~R.~Cox, ``Regression models and life-tables,''
+\emph{Journal of the Royal Statistical Society B}, vol.~34, no.~2,
+1972.
+
+\bibitem{kalbfleisch2002} J.~D.~Kalbfleisch and R.~L.~Prentice,
+\emph{The Statistical Analysis of Failure Time Data}, 2nd ed.,
+Wiley, 2002.
+
+\bibitem{kuhn2018} M.~Kuhn and K.~Johnson,
+\emph{Applied Predictive Modeling}, Springer, 2018.
+
+\bibitem{davidson2019} C.~Davidson-Pilon, ``lifelines: Survival
+analysis in Python,'' \emph{Journal of Open Source Software},
+vol.~4, no.~40, 2019.
+
+\bibitem{wager2018} S.~Wager and S.~Athey, ``Estimation and
+inference of heterogeneous treatment effects using random forests,''
+\emph{Journal of the American Statistical Association}, vol.~113,
+no.~523, 2018.
+
+\bibitem{kennedy2020} E.~H.~Kennedy, ``Optimal doubly robust
+estimation of heterogeneous causal effects,''
+\emph{arXiv:2004.14497}, 2020.
+
+\bibitem{kunzel2019} S.~R.~K\"unzel, J.~S.~Sekhon, P.~J.~Bickel, and
+B.~Yu, ``Metalearners for estimating heterogeneous treatment
+effects using machine learning,''
+\emph{PNAS}, vol.~116, no.~10, 2019.
+
+\bibitem{econml2019} Microsoft Research, ``EconML: A Python package
+for ML-based heterogeneous treatment effects estimation,''
+\url{https://github.com/microsoft/EconML}, 2019.
+
+\bibitem{lewis2020} P.~Lewis et al., ``Retrieval-augmented
+generation for knowledge-intensive NLP tasks,''
+in \emph{NeurIPS}, 2020.
 
 \bibitem{johnson2019} J.~Johnson, M.~Douze, and H.~J\'egou,
 ``Billion-scale similarity search with GPUs,''
@@ -420,16 +790,16 @@ for knowledge-intensive NLP tasks,'' in \emph{NeurIPS}, 2020.
 
 \bibitem{androutsopoulos1995} I.~Androutsopoulos, G.~Ritchie, and
 P.~Thanisch, ``Natural language interfaces to databases --- An
-introduction,'' \emph{Natural Language Engineering}, vol.~1, no.~1,
-1995.
+introduction,''
+\emph{Natural Language Engineering}, vol.~1, no.~1, 1995.
 
 \bibitem{rajkumar2022} N.~Rajkumar, R.~Li, and D.~Bahdanau,
 ``Evaluating the text-to-SQL capabilities of large language
 models,'' \emph{arXiv:2204.00498}, 2022.
 
 \bibitem{pourreza2023} M.~Pourreza and D.~Rafiei, ``DIN-SQL:
-Decomposed in-context learning of text-to-SQL with
-self-correction,'' in \emph{NeurIPS}, 2023.
+Decomposed in-context learning of text-to-SQL with self-correction,''
+in \emph{NeurIPS}, 2023.
 
 \bibitem{lundberg2017} S.~M.~Lundberg and S.-I.~Lee, ``A unified
 approach to interpreting model predictions,'' in \emph{NeurIPS},

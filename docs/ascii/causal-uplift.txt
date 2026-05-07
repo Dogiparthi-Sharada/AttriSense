@@ -1,0 +1,49 @@
+Causal Uplift — T-Learner (ASCII)
+==================================
+
+Predictive model:    P(leave | x)
+Causal/uplift model: P(leave | x, treated) - P(leave | x, untreated)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     conditional average treatment effect (CATE)
+
+T-Learner = "Two" learners:
+
+           +-----------------+         +-----------------+
+           |  treated rows   |         | untreated rows  |
+           |  (T=1)          |         | (T=0)           |
+           +--------+--------+         +--------+--------+
+                    |                           |
+                    v                           v
+           +-----------------+         +-----------------+
+           |   mu_1(x)       |         |   mu_0(x)       |
+           |   model fitted  |         |   model fitted  |
+           |   on treated    |         |   on untreated  |
+           +--------+--------+         +--------+--------+
+                    |                           |
+                    +-------------+-------------+
+                                  |
+                                  v
+                          +-----------------+
+                          | tau(x_i) =      |
+                          | mu_1(x_i) -     |
+                          | mu_0(x_i)       |
+                          +-----------------+
+                                  |
+                                  v
+                  per-individual uplift estimate
+
+AttriSense treatment arms:
+  - 5% raise          (low cost)
+  - 10% raise         (medium cost)
+  - manager change    (medium cost)
+
+Important: the demo uses SIMULATED treatment (synthetic data has no
+real treatment log). The pattern is the same once you have real
+historical retention-action data.
+
+Causal assumptions to validate:
+  - overlap          (both treatment arms have data at every x)
+  - unconfoundedness (no hidden confounder between T and Y)
+  - SUTVA            (one person's treatment doesn't affect another)
+The dashboard shows uplift; it does NOT validate these assumptions
+for you.

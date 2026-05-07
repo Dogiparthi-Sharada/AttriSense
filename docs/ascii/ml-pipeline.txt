@@ -1,0 +1,41 @@
+ML Pipeline (ASCII)
+====================
+
+train_retention_risk_model.py — deterministic, reproducible (seed=42)
+
+   +-----------+   +-----------+
+   | Load CSV  |-->|  Split    |
+   | 5,000 rows|   | 80/20     |
+   +-----------+   | stratified|
+                   +-----+-----+
+                         |
+       +-----------------+----------------+
+       |                 |                |
+       v                 v                v
+   +-------+         +--------+        +---------+
+   | SMOTE |         | Cox PH |        | T-      |
+   | (bal- |         | fit    |        | Learner |
+   |  ance)|         |        |        | fit     |
+   +---+---+         +---+----+        +----+----+
+       |                                    |
+       v                                    |
+   +-------------+                          |
+   | Random      |<-------------------------+
+   | Forest fit  |   (parallel models)
+   | n=300       |
+   | depth=12    |
+   +------+------+
+          |
+          v
+   +-----------+        +---------------+
+   | SHAP      |------->| Save:         |
+   | Tree      |        | .joblib +     |
+   | Explainer |        | SQLite tables |
+   +-----------+        +---------------+
+
+Outputs:
+  - attrisense_model.joblib
+  - workforce_predictions  (one row per employee)
+  - shap_feature_impact    (top-K drivers per high-risk employee)
+  - model_calibration      (10 reliability bins)
+  - survival_curves        (Cox PH per-employee)

@@ -1,0 +1,33 @@
+SMOTE — Class-Balance Oversampling (ASCII)
+============================================
+
+Before SMOTE:                After SMOTE:
+  class 0 ████████ (4100)      class 0 ████████ (4100)
+  class 1 ██       (900)       class 1 ████████ (4100)
+                                       ^^^^^^^^
+                                       ~3200 of these are SYNTHETIC
+
+How a synthetic point is created:
+
+         x_j  (real minority neighbour)
+          o
+           \
+            \      x_new = x_i + lambda * (x_j - x_i),  lambda in [0,1]
+             *  <-- synthetic
+              \
+               \
+                o
+               x_i  (real minority point)
+
+  - x_i is a real minority sample
+  - x_j is one of x_i's k nearest minority neighbours (default k=5)
+  - the synthetic point lies on the line segment between them
+
+Order of operations (this matters):
+  1. split train/test
+  2. SMOTE on the train fold ONLY
+  3. fit model
+  4. evaluate on test (which was never SMOTEd)
+
+If you SMOTE before splitting, you leak synthetic points into test
+and your "great" accuracy is a lie.

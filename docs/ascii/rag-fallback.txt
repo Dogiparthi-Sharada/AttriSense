@@ -1,0 +1,37 @@
+Multilingual RAG — Resilient Provider Fallback (ASCII)
+========================================================
+
+OpenAI-first, hashing-fallback when the API is unreachable
+
+   +-----------+    +---------------+
+   | user      |--->|  reachability |
+   | query     |    |  probe        |
+   | EN/ES/HI  |    |  (api.openai) |
+   +-----------+    +-------+-------+
+                            |
+                  +---------+---------+
+                  |                   |
+              reachable          firewall/5xx
+                  |                   |
+                  v                   v
+         +----------------+   +-----------------+
+         | OpenAI         |   | Hashing         |
+         | embeddings     |   | embeddings      |
+         | 1536-dim       |   | 256-dim · MD5   |
+         +-------+--------+   +--------+--------+
+                 |                     |
+                 +----------+----------+
+                            |
+                            v
+                  +-------------------+
+                  | FAISS index       |
+                  | per-provider dir  |
+                  | + cosine similar. |
+                  +-------------------+
+
+Per-provider directories prevent dimension collisions:
+  data/multilingual_index/openai/    (1536-dim)
+  data/multilingual_index/hashing/   (256-dim)
+
+Each result row carries a `provider` field so reviewers can see
+which backend served the query.

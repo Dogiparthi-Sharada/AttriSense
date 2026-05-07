@@ -1,0 +1,49 @@
+AttriSense — Six-Layer Architecture (ASCII)
+============================================
+
+Each layer depends only on layers below it. Replace any layer without
+touching the rest.
+
+   +----------------------------------------------------------------+
+   | 6. STREAMLIT DASHBOARD                                         |
+   |    Executive · SHAP · Compare · Uplift · Fairness · AI         |
+   |    NL-SQL Eval · RAG · Alert · Ethics                          |
+   +----------------------------------------------------------------+
+                                  ^
+                                  | reads
+   +----------------------------------------------------------------+
+   | 5. APPLICATION LAYER  (production/src/attrisense/)             |
+   |    compare · onboarding · fairness · causal_uplift             |
+   |    multilingual_rag · nl_sql_eval · nl_sql_fallback            |
+   |    slack_alert_mock · theme                                    |
+   +----------------------------------------------------------------+
+              |                                |
+              | imports                        | writes
+              v                                v
+   +-----------------------+        +--------------------------------+
+   | 4. EXPLAINABILITY     |        | 3. MODELING LAYER (root)       |
+   |    SHAP TreeExplainer |        |    train_retention_risk_model  |
+   |    driver tables      |        |    (sklearn + SMOTE +          |
+   |    what-if simulation |        |     lifelines + joblib)        |
+   +-----------------------+        +----------------+---------------+
+              |                                      |
+              | embeds                               | writes
+              v                                      v
+   +-----------------------+        +--------------------------------+
+   | 2. AI / RAG SERVICES  |        | 1. DATA LAYER                  |
+   |    natural_language_  |        |    hr_enterprise.db (SQLite)   |
+   |    sql · build_exit_  |        |    +-- workforce_predictions   |
+   |    interview_vector_  |        |    +-- shap_feature_impact     |
+   |    index              |        |    +-- model_calibration       |
+   |    (LangChain+OpenAI  |        |    +-- survival_curves         |
+   |     +FAISS)           |        |    + faiss_hr_index/           |
+   +-----------------------+        +--------------------------------+
+              ^                                      ^
+              |                                      |
+              +-----------+      +-------------------+
+                          |      |
+   +----------------------v------v---------------------------------+
+   | 0. OPERATIONS & ETHICS                                        |
+   |    pytest · GitHub Actions · Docker · Make targets            |
+   |    fairness audit · model card · four-fifths rule             |
+   +---------------------------------------------------------------+

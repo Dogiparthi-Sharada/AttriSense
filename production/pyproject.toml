@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attrisense"
+version = "2.0.0"
+description = "Production-grade workforce-intelligence demo: prediction, SHAP, Cox survival, causal uplift, multilingual RAG, NL→SQL with read-only guardrails."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Dogiparthi Sharada" }]
+license = { text = "MIT" }
+keywords = ["hr-analytics", "shap", "causal-inference", "rag", "streamlit"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+]
+dependencies = [
+    "streamlit>=1.56.0",
+    "pandas>=2.1.4",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.3.2",
+    "imbalanced-learn>=0.11.0",
+    "plotly>=5.17.0",
+    "shap>=0.51.0",
+    "lifelines>=0.30.3",
+    "joblib>=1.5.3",
+    "langchain>=1.0.0",
+    "langchain-classic>=1.0.0",
+    "langchain-openai>=1.0.0",
+    "langchain-community>=0.4.0",
+    "langchain-text-splitters>=0.3.0",
+    "faiss-cpu>=1.7.4",
+    "python-dotenv>=1.0.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+causal = ["econml>=0.15"]
+dev = ["pytest>=8", "pytest-cov", "ruff", "black", "mypy"]
+
+[project.urls]
+Homepage = "https://github.com/Dogiparthi-Sharada/AttriSense"
+Issues = "https://github.com/Dogiparthi-Sharada/AttriSense/issues"
+
+[tool.setuptools.packages.find]
+where = ["production/src"]
+
+[tool.pytest.ini_options]
+testpaths = ["production/tests"]
+addopts = "-ra -q --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["production/src", "production/tests"]
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

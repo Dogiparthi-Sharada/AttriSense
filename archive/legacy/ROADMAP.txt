@@ -1,0 +1,80 @@
+AttriSense ROADMAP
+==================
+
+Last updated: May 7, 2026.
+
+This file tracks items that are NOT code-level work. The original
+week1/ … week4/ folders contain a 28-day post-interview career and
+launch plan; below is the condensed, still-pending status. Anything
+that was code-shaped and shippable has been implemented under
+production/.
+
+Code status
+-----------
+[done] Week 2 — SHAP per-employee explanations
+[done] Week 3 Tier 1 — What-If Simulator, Manager Rollup, Cost Calculator
+[done] Week 3 Tier 2 — Cox Survival, Calibration plot, Ethics tab
+[done] Week 3 Tier 3 — Compare-Two-Employees, Onboarding tour,
+                       Slack-alert mock
+[done] Week 3 Tier 4 — Causal Uplift (EconML), Multilingual RAG,
+                       NL→SQL eval harness with 50 gold questions
+[done] Week 1 deliverable — production-grade repo restructure with
+                            Makefile, Docker, pytest, GitHub Actions
+
+Non-code items (career / launch / publication)
+----------------------------------------------
+Week 1
+  [ ] Day 1: AI_CONTRIBUTIONS.md authored
+  [ ] Day 1: Synthetic-data banner pinned to top of README
+  [ ] Day 2: Streamlit Community Cloud deployment + public URL
+  [ ] Day 3: Repo rename to attrisense (if not already)
+  [ ] Day 4: 60-second demo video recorded + captioned
+  [ ] Day 5: arXiv submission (paper/attrisense_ieee.tex) + SSRN cross-post
+  [ ] Day 6: CSUEB Tech Transfer email sent (template in week1/05_…)
+  [ ] Day 7: Buffer day, follow-up emails
+
+Week 2 (launch week)
+  [ ] LinkedIn launch post (Tuesday May 12)
+  [ ] Twitter/X thread version
+  [ ] Towards Data Science article
+  [ ] First wave of recruiter / HR-leader DMs (10-20)
+  [ ] Pipeline tracker maintained (week2/08_pipeline_tracker.md)
+
+Week 3 (compound week)
+  [ ] Architecture carousel post (Tuesday May 19)
+  [ ] Vulnerability post — "3 things I got wrong" (Thursday May 22)
+  [ ] IEEE Big Data Industry Track submission
+  [ ] Recorded podcast / live demo with a peer
+  [ ] At least 2 conversations with target-company employees
+
+Week 4 (convergence)
+  [ ] "Month in Review" post on LinkedIn (Tuesday May 27)
+  [ ] Lightning-talk proposal submitted (PyData / Bay Area Women in Analytics
+      / SF Bay ACM / ODSC West)
+  [ ] Negotiation playbook reviewed before any offer arrives
+  [ ] Patent decision: Tech Transfer route OR USPTO provisional ($75) OR drop
+  [ ] 90-day forward roadmap drafted
+
+Production hardening still open
+-------------------------------
+[ ] Wire the live demo URL into the README badges section
+[ ] Add Streamlit Community Cloud config (`streamlit/config.toml` already
+    present; add `secrets.toml` template via .streamlit/secrets.example.toml)
+[ ] Replace the synthetic causal-uplift treatment column with a real
+    propensity-score-matched arm if real comp-review data becomes available
+[ ] Add a Postgres adapter alongside the SQLite contract (the dashboard
+    already reads through `DATABASE_PATH`; only the connection factory
+    needs to switch)
+[ ] Add role-based access control (RBAC) for the dashboard tabs
+    (Executive vs HR Partner vs Manager views)
+[ ] Add automatic dashboard screenshot refresh in CI (Playwright)
+[ ] Sign + publish the Docker image to GHCR with version tags
+[ ] Wire SHAP explanation refresh into a scheduled job (currently per-run)
+
+Notes
+-----
+- Original streamlit_app.py is intentionally untouched. The v2 dashboard at
+  production/streamlit_app_v2.py is additive.
+- All employee data remains synthetic. Any real deployment must complete an
+  independent fairness audit (built-in audit runs the EEOC four-fifths
+  rule check) before NYC LL144 covered uses.

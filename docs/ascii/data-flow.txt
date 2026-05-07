@@ -1,0 +1,38 @@
+End-to-End Data Flow (ASCII)
+=============================
+
+One employee record (EMP_2417) traced from CSV creation to a SHAP-
+explained prediction in the Streamlit dashboard.
+
+    +----------+     +----------+     +-----------+
+    | HRIS/CSV |---->|  SQLite  |---->|  Feature  |
+    | 5,000    |     | employees|     |  engineer |
+    | rows     |     |          |     |  (4 cols) |
+    +----------+     +----------+     +-----+-----+
+                                            |
+                  +-------------------------+
+                  | (same 4 features fan out to 3 models)
+                  v
+       +-------+ +-------+ +----------+
+       | RF +  | | Cox   | | T-Learner|
+       | SMOTE | | PH    | |  uplift  |
+       +---+---+ +---+---+ +-----+----+
+           \         |          /
+            \        |         /
+             v       v        v
+            +------------------+
+            |       SHAP       |
+            |    drivers       |
+            +---------+--------+
+                      |
+                      v
+            +------------------+
+            |    Streamlit     |
+            |     v2 app       |
+            +------------------+
+
+All three model paths share the same 4-feature input:
+  - tenure_months
+  - base_salary
+  - dept_code
+  - manager_tenure_months

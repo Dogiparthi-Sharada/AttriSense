@@ -1,348 +1,339 @@
+<div align="center">
+
 # AttriSense
 
-AttriSense is a production-readable workforce intelligence demo that turns HR data into retention-risk decisions. It generates synthetic employee data, trains a retention-risk model, stores predictions in SQLite, exposes an executive Streamlit dashboard, and supports natural-language SQL for non-technical users.
+### Explainable, Fair, and Resilient Workforce Retention Analytics
 
-Repository: https://github.com/Dogiparthi-Sharada/AttriSense
+*A production-grade Streamlit + scikit-learn + SHAP + LangChain dashboard for HR leaders who need to act on retention risk **without** acting on a black box.*
 
-![AttriSense product overview](assets/productOverview.png)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.39-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Tests](https://img.shields.io/badge/tests-31%2F31_passing-brightgreen.svg)](production/tests/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-526CFE.svg)](docs/index.md)
+[![EEOC four-fifths](https://img.shields.io/badge/fairness-four--fifths_audited-success.svg)](docs/ethics/fairness-policy.md)
 
-## What This Project Proves
+![AttriSense Architecture](docs/images/diagrams/architecture.png)
 
-Attrition is expensive because leaders often discover risk after it becomes resignation volume. AttriSense shows how a compact AI system can answer:
+</div>
 
-- Which employees are most likely to leave?
-- Which departments carry the highest risk concentration?
-- What should HR prioritize first?
-- How can a business user ask the data questions without writing SQL?
+---
 
-The current dataset is synthetic, so the project is safe to run, demo, publish, and extend without exposing employee information.
+## Table of contents
 
-## Product Capabilities
+- [Why AttriSense](#why-attrisense)
+- [Feature tour](#feature-tour)
+- [Quickstart (5 minutes)](#quickstart-5-minutes)
+  - [Windows / PowerShell](#windows--powershell)
+  - [macOS / Linux](#macos--linux)
+  - [Docker](#docker)
+- [What's in the box](#whats-in-the-box)
+- [Architecture at a glance](#architecture-at-a-glance)
+- [Documentation](#documentation)
+- [Ethics statement](#ethics-statement)
+- [Project layout](#project-layout)
+- [Contributing](#contributing)
+- [License](#license)
 
-| Capability | Production purpose |
-| --- | --- |
-| Executive dashboard | Gives leaders a fast read on total workforce, risk bands, department concentration, and intervention priorities. |
-| Retention-risk model | Uses Random Forest plus SMOTE to learn rare turnover patterns and score each employee. |
-| SHAP explainability | Explains high-risk employee scores with primary risk drivers and global feature impact. |
-| Decision tools | Adds a live What-If Simulator, manager-level risk rollup, and CFO-facing attrition cost calculator. |
-| Survival and calibration | Adds Cox survival curves, median expected tenure, 12-month survival probability, and calibration QA. |
-| Responsible AI | Adds a Limitations & Ethics tab plus a project model card for deployment guardrails. |
-| Natural-language SQL | Converts plain-English HR questions into guarded, read-only SQLite queries. |
-| Exit-interview vector index | Builds a FAISS index for semantic analysis of synthetic exit interview notes. |
-| Public Streamlit launcher | Runs the app on `0.0.0.0` so it can be exposed from a VM, server, tunnel, or deployment platform. |
+---
 
-## Dashboard Screenshots
+## Why AttriSense
 
-These screenshots were captured from the restored Streamlit dashboard. Original screenshots were captured on `8501`; the Tier 1/Tier 2 screenshots were captured on `8503`. The capture logs live in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt) and [outputs/tierFeatureCaptureLog.txt](outputs/tierFeatureCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
-The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outputs/readmeAssetInventory.txt).
+Most retention dashboards stop at *"who's leaving?"*. AttriSense answers four harder questions:
 
-| Asset | What it shows |
-| --- | --- |
-| `assets/executiveDashboard.png` | Executive KPIs, key insights, flight-risk distribution, high-risk department hot spots, and department risk profile. |
-| `assets/turnoverAnalytics.png` | Detailed high-risk employee analytics with intervention KPIs, risk probability distribution, recommended actions, and employee details. |
-| `assets/tenureAnalytics.png` | Tenure versus flight-risk analytics with average tenure, median tenure, and early-tenure employee KPIs. |
-| `assets/salaryAnalytics.png` | Compensation distribution by department and risk level with average salary, median salary, and salary range KPIs. |
-| `assets/departmentComparison.png` | Department-level comparison table for employee count, average risk, salary, and tenure. |
-| `assets/decisionToolsDashboard.png` | What-If Simulator, manager risk rollup, and cost-of-attrition calculator. |
-| `assets/managerRiskRollup.png` | Manager-level risk concentration sorted by high-risk percentage. |
-| `assets/costCalculator.png` | CFO-facing cost-of-attrition calculator with replacement-cost multiplier. |
-| `assets/shapInsightsDashboard.png` | SHAP explainability center with global drivers, board-level insights, and employee-level risk explanations. |
-| `assets/survivalCalibrationDashboard.png` | Cox survival curves and calibration plot for model QA. |
-| `assets/ethicsDashboard.png` | Limitations, ethics, fairness summary, and model-card link. |
-| `assets/aiAssistant.png` | Natural-language AI assistant with example workforce questions and SQL execution workflow. |
+| Question | How AttriSense answers it |
+|---|---|
+| **Why** is this person at risk? | SHAP per-employee waterfall + driver table |
+| **What if** we change something? | What-if sliders + EconML T-learner uplift |
+| **Is the model fair?** | EEOC four-fifths audit on every dashboard load |
+| **What if the LLM is down?** | TF-IDF + hashing fallbacks for AI features |
 
-![Executive dashboard](assets/executiveDashboard.png)
+Designed for **explainability first**, **fairness as a gate**, and **graceful degradation** when external services fail.
 
-![Turnover analytics](assets/turnoverAnalytics.png)
+---
 
-![Tenure analytics](assets/tenureAnalytics.png)
+## Feature tour
 
-![Salary analytics](assets/salaryAnalytics.png)
+<table>
+<tr>
+<td width="50%">
 
-![Department comparison](assets/departmentComparison.png)
+### Executive Dashboard
+KPIs, risk distribution, manager rollups.
 
-![AI assistant](assets/aiAssistant.png)
+![Executive](docs/images/executive.png)
 
-![Decision tools dashboard](assets/decisionToolsDashboard.png)
+</td>
+<td width="50%">
 
-![Manager risk rollup](assets/managerRiskRollup.png)
+### SHAP Insights
+Per-employee waterfall with driver explanations.
 
-![Cost calculator](assets/costCalculator.png)
+![SHAP](docs/images/shap.png)
 
-![SHAP insights dashboard](assets/shapInsightsDashboard.png)
+</td>
+</tr>
+<tr>
+<td>
 
-![Survival and calibration dashboard](assets/survivalCalibrationDashboard.png)
+### Compare Employees
+Side-by-side panel for two employees.
 
-![Ethics dashboard](assets/ethicsDashboard.png)
+![Compare](docs/images/compare.png)
 
-## Visual Outputs
+</td>
+<td>
 
-The images below are generated from the real SQLite output by `create_readme_assets.py`. The architecture image is copied from [doc/architecture_diagram.png](doc/architecture_diagram.png) into `assets/architecture.png` so the README uses the preferred diagram.
+### Causal Uplift
+EconML T-learner over three treatment arms.
 
-![Risk distribution](assets/riskDistribution.png)
+![Uplift](docs/images/uplift.png)
 
-![High-risk employees by department](assets/highRiskByDepartment.png)
+</td>
+</tr>
+<tr>
+<td>
 
-![AttriSense architecture](assets/architecture.png)
+### Fairness Audit
+Disparate-impact ratio with pause-on-failure.
 
-## Real Run Evidence
+![Fairness](docs/images/fairness.png)
 
-Pipeline output captured in [outputs/pipeline_run.txt](outputs/pipeline_run.txt):
+</td>
+<td>
 
-```text
-AttriSense Pipeline Run
-======================
+### AI Assistant
+NL→SQL with TF-IDF gold-question fallback.
 
-$ python.exe generate_demo_workforce_data.py
-Generated 5,000 synthetic employees at attrisense_synthetic_hr.csv.
-exit_code=0
+![AI Assistant](docs/images/ai_assistant.png)
 
-$ python.exe train_retention_risk_model.py
-Loading workforce data...
-Saved 5,000 employee risk scores to hr_enterprise.db:workforce_predictions.
-Saved SHAP feature impact to hr_enterprise.db:shap_feature_impact and outputs/shapInsights.txt.
-Saved calibration bins to hr_enterprise.db:model_calibration and survival curves to hr_enterprise.db:survival_curves.
-Saved live scoring model artifact to attrisense_model.joblib.
-exit_code=0
+</td>
+</tr>
+<tr>
+<td>
 
-Skipped optional build_exit_interview_vector_index.py in this capture because it requires OPENAI_API_KEY.
+### Multilingual RAG
+EN / ES / HI exit-interview semantic search.
+
+![RAG](docs/images/rag.png)
+
+</td>
+<td>
+
+### Alert Mock + Ethics
+Slack/Teams card preview + model-card disclosure.
+
+![Alert](docs/images/alert.png)
+
+</td>
+</tr>
+</table>
+
+Full feature breakdowns: [docs/features/](docs/features/).
+
+---
+
+## Quickstart (5 minutes)
+
+### Windows / PowerShell
+
+```powershell
+# 1. Clone
+git clone https://github.com/Dogiparthi-Sharada/AttriSense.git
+cd AttriSense
+
+# 2. Virtual environment (Python 3.11+)
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+# If blocked: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# 3. Install
+pip install -r requirements.txt
+
+# 4. Generate data + train model
+python generate_demo_workforce_data.py
+python train_retention_risk_model.py
+
+# 5. Run the production dashboard
+streamlit run production\streamlit_app.py
 ```
 
-Metrics captured in [outputs/metrics_snapshot.txt](outputs/metrics_snapshot.txt):
+> **No `make` on Windows?** Use the direct `streamlit` / `pytest` commands shown above, run inside **Git Bash**, or `choco install make`.
 
-```text
-Total workforce: 5,000
-Average salary: $104,673
-Average tenure: 29.81 months
-
-Risk distribution:
-- High Risk: 526
-- Medium Risk: 181
-- Low Risk: 4,293
-
-High-risk employees by department:
-- Manufacturing: 406
-- Engineering: 100
-- Sales: 20
-```
-
-## Sample Data Outputs
-
-| Metric | Output |
-| --- | ---: |
-| Total workforce | 5,000 |
-| High flight risk | 526 |
-| Medium risk | 181 |
-| Low risk | 4,293 |
-| Average salary | $104,673 |
-| Average tenure | 29.81 months |
-
-| Department | High-risk employees |
-| --- | ---: |
-| Manufacturing | 406 |
-| Engineering | 100 |
-| Sales | 20 |
-
-| Emp_ID | Department | Tenure | Salary | Risk probability | Risk level |
-| ---: | --- | ---: | ---: | ---: | --- |
-| 1027 | Manufacturing | 4 months | $62,158 | 1.000 | High Risk |
-| 1188 | Manufacturing | 4 months | $104,722 | 1.000 | High Risk |
-| 1271 | Manufacturing | 2 months | $78,527 | 1.000 | High Risk |
-
-## AI Assistant Example
-
-Question:
-
-```text
-How many high risk employees are in Manufacturing?
-```
-
-Typical generated SQL:
-
-```sql
-SELECT COUNT(*) AS high_risk_manufacturing
-FROM workforce_predictions
-WHERE Department = 'Manufacturing'
-  AND Risk_Level = 'High Risk';
-```
-
-Result:
-
-```text
-406
-```
-
-## Tier 1 Decision Tools
-
-The Week 3 Tier 1 features are implemented in the `Decision Tools` tab:
-
-- **What-If Simulator:** select an employee, adjust salary by -20% to +20%, add tenure, toggle a manager change, and watch the live model score recalculate.
-- **Manager-Level Risk Rollup:** groups employees by `Manager_ID`, shows total reports, high-risk percentage, average risk, manager tenure, and salary-weighted exposure.
-- **Cost-of-Attrition Calculator:** lets leaders change the replacement-cost multiplier and immediately see quarterly, annualized, and probability-weighted exposure.
-
-These turn the project from a prediction dashboard into an operating system for retention decisions.
-
-## Tier 2 Model QA
-
-The Week 3 Tier 2 features are implemented in `Survival & Calibration` and `Ethics`:
-
-- **Cox Survival Analysis:** fits a Cox proportional hazards model and writes cohort survival curves into `survival_curves`.
-- **Calibration Plot:** writes holdout probability bins into `model_calibration` and displays predicted vs observed turnover.
-- **Limitations & Ethics:** documents synthetic data caveats, correlation limits, fairness monitoring, NYC Local Law 144 alignment, and a no-adverse-decision policy.
-
-See [MODEL_CARD.md](MODEL_CARD.md) for the responsible-use model card.
-
-## SHAP Explainability
-
-AttriSense now includes a dedicated `SHAP Insights` dashboard tab. The model explains all high-risk employees first, then adds a risk-weighted representative sample so the global driver story stays fast to regenerate locally.
-
-The SHAP output is written into SQLite and summarized in [outputs/shapInsights.txt](outputs/shapInsights.txt):
-
-```text
-Global model drivers by mean absolute SHAP value:
-- Tenure: 0.1452
-- Manager tenure: 0.0992
-- Compensation: 0.0989
-- Department: 0.0599
-
-Primary drivers among high-risk employees:
-- Tenure: 273 employees
-- Compensation: 117 employees
-- Manager tenure: 101 employees
-- Department: 35 employees
-```
-
-This is the enterprise-grade layer: leaders can see which workforce levers are driving risk, HR can explain individual high-risk scores, and Finance gets a salary-weighted exposure estimate instead of only a model probability.
-
-## Architecture
-
-```text
-generate_demo_workforce_data.py
-        |
-        v
-attrisense_synthetic_hr.csv
-        |
-        v
-train_retention_risk_model.py
-        |
-        v
-hr_enterprise.db:workforce_predictions
-        |
-        +--> streamlit_app.py
-        +--> natural_language_sql.py
-        +--> build_exit_interview_vector_index.py
-```
-
-The project stays intentionally small: one shared config file, clear pipeline stages, generated proof assets, and a Streamlit app that reads from SQLite.
-
-## Quick Start
+### macOS / Linux
 
 ```bash
 git clone https://github.com/Dogiparthi-Sharada/AttriSense.git
 cd AttriSense
 
-python -m venv attrisense_env
-attrisense_env\Scripts\activate
+python3.11 -m venv .venv
+source .venv/bin/activate              # bash/zsh
+# OR: source .venv/bin/activate.csh    # csh/tcsh
 
 pip install -r requirements.txt
-python launch_streamlit_app.py
-```
 
-Open:
-
-```text
-http://localhost:8501
-```
-
-By default, `launch_streamlit_app.py` binds Streamlit to `0.0.0.0:8501`.
-
-## Rebuild the Demo Pipeline
-
-```bash
 python generate_demo_workforce_data.py
 python train_retention_risk_model.py
-python create_readme_assets.py
+
+# Production dashboard
+make -C production run
+# OR original demo:
 python launch_streamlit_app.py
 ```
 
-Optional vector index:
+### Docker
 
 ```bash
-python build_exit_interview_vector_index.py
+cd production
+docker build -t attrisense:latest -f Dockerfile ..
+docker run --rm -p 8501:8501 --env-file ../.env attrisense:latest
 ```
 
-`build_exit_interview_vector_index.py` requires `OPENAI_API_KEY`. The dashboard and model do not.
+Browse to <http://localhost:8501>.
 
-## Optional AI Setup
+> **Optional:** copy `.env.example` to `.env` and add `OPENAI_API_KEY=sk-...` to enable the AI Assistant + multilingual OpenAI embeddings. **Without a key, the dashboard still works** — it falls back to TF-IDF and hashing embeddings.
 
-The dashboard charts work without an OpenAI key. The AI Assistant and vector index builder require credentials.
+Full installation guide with all four shells (PowerShell, cmd, bash, csh): [docs/quickstart.md](docs/quickstart.md).
+
+---
+
+## What's in the box
+
+| Capability | Tech | Code |
+|---|---|---|
+| Retention classifier | RandomForest + SMOTE | [`train_retention_risk_model.py`](train_retention_risk_model.py) |
+| Survival analysis | Cox proportional hazards (`lifelines`) | same |
+| Per-employee explanations | SHAP TreeExplainer | same |
+| Causal uplift | EconML T-learner (3 treatment arms) | [`production/src/attrisense/causal_uplift.py`](production/src/attrisense/causal_uplift.py) |
+| Fairness audit | EEOC four-fifths rule | [`production/src/attrisense/fairness.py`](production/src/attrisense/fairness.py) |
+| NL→SQL Q&A | LangChain + OpenAI + SQLite, with TF-IDF fallback | [`natural_language_sql.py`](natural_language_sql.py) + [`production/src/attrisense/nl_sql_fallback.py`](production/src/attrisense/nl_sql_fallback.py) |
+| NL→SQL eval | 50 gold questions across 4 categories | [`production/src/attrisense/nl_sql_eval.py`](production/src/attrisense/nl_sql_eval.py) |
+| Multilingual RAG | LangChain + FAISS, OpenAI → hashing fallback | [`production/src/attrisense/multilingual_rag.py`](production/src/attrisense/multilingual_rag.py) |
+| Onboarding tour | session-state cursor over 6 steps | [`production/src/attrisense/onboarding.py`](production/src/attrisense/onboarding.py) |
+| Slack/Teams mock | preview-only card renderer | [`production/src/attrisense/slack_alert_mock.py`](production/src/attrisense/slack_alert_mock.py) |
+| Dark SaaS theme | centralized Plotly defaults | [`production/src/attrisense/theme.py`](production/src/attrisense/theme.py) |
+
+**31 pytest tests across 8 files** — [`production/tests/`](production/tests/).
+
+---
+
+## Architecture at a glance
+
+![Data flow](docs/images/diagrams/data-flow.png)
+
+Six layers, each with one responsibility:
+
+1. **Data** — synthetic CSV → SQLite (`hr_enterprise.db`)
+2. **Modeling** — RF + SMOTE, Cox PH, T-Learner
+3. **Explainability** — SHAP, driver tables, what-if
+4. **Application** — Streamlit dashboards (demo + production)
+5. **Operations** — pytest, GitHub Actions, Docker, Make
+6. **Ethics & Governance** — fairness audit, model card, four-fifths gate
+
+Deep dive: [docs/architecture/](docs/architecture/).
+
+---
+
+## Documentation
+
+The full documentation site lives under [`docs/`](docs/) and is built with **MkDocs Material**.
+
+| Section | What's there |
+|---|---|
+| [Quickstart](docs/quickstart.md) | 5-minute setup, all four shells |
+| [Architecture](docs/architecture/) | Six-layer overview, data flow, ML pipeline, tech stack |
+| [Features](docs/features/) | One page per dashboard tab with code paths + design rationale |
+| [Design](docs/design/) | Decisions, why-this-stack, trade-offs |
+| [Operations](docs/operations/) | Installation, configuration, secrets, Docker, CI/CD |
+| [Reference](docs/reference/) | Data schema, module API, gold questions, make targets |
+| [Ethics](docs/ethics/) | Model card, fairness policy, intended-use boundary |
+| [Troubleshooting](docs/troubleshooting.md) | Every error we've hit + fix (Windows + csh quirks included) |
+| [FAQ](docs/faq.md) · [Glossary](docs/glossary.md) · [Roadmap](docs/roadmap.md) | |
+
+To serve docs locally:
 
 ```bash
-copy .env.example .env
+pip install -e "production[docs]"
+mkdocs serve
 ```
 
-Set:
+---
 
-```text
-OPENAI_API_KEY=your_openai_api_key_here
+## Ethics statement
+
+AttriSense is for **retention support**, not for **performance management, termination decisions, or compensation arbitration**. The model is **not** an LL144-compliant audit; it produces the technical artifact that an independent third-party auditor would consume.
+
+Three core commitments:
+
+1. **Audit before action.** Every dashboard view that could trigger an HR decision shows the disparate-impact ratio first.
+2. **Pause on failure.** If any group fails the [four-fifths rule](docs/ethics/fairness-policy.md), automated alerts pause for that group until retraining.
+3. **No fairness through unawareness.** Removing protected attributes is not a defence — we audit on them anyway.
+
+The model never sees `employee_id` (it's an identifier, not a feature). For the **human-reviewer identification-bias** problem and the recommended pseudonymized `review_id` mapping pattern, see [fairness-policy.md](docs/ethics/fairness-policy.md#employee-id-bias).
+
+Read the full [model card](docs/ethics/model-card.md) and [intended-use boundary](docs/ethics/intended-use.md) before deploying anywhere real.
+
+---
+
+## Project layout
+
 ```
-
-## Project Structure
-
-```text
 AttriSense/
-|-- config.py                              # Shared paths, table name, risk thresholds
-|-- generate_demo_workforce_data.py         # Creates synthetic HR demo data
-|-- train_retention_risk_model.py           # Trains model and writes SQLite predictions
-|-- build_exit_interview_vector_index.py    # Optional FAISS index builder
-|-- natural_language_sql.py                 # Guarded natural-language to SQL helper
-|-- streamlit_app.py                        # Streamlit dashboard
-|-- launch_streamlit_app.py                 # Public Streamlit launcher
-|-- create_readme_assets.py                 # Generates README PNGs and output captures
-|-- MODEL_CARD.md                           # Responsible AI model card
-|-- assets/                                 # README-ready generated PNGs
-|-- outputs/                                # Captured command and metric outputs
-|-- attrisense_synthetic_hr.csv             # Demo dataset
-|-- hr_enterprise.db                        # Demo prediction database
-|-- attrisense_model.joblib                 # Persisted model for What-If scoring
-|-- faiss_hr_index/                         # Demo vector index
-|-- .streamlit/config.toml                  # Streamlit runtime config
-|-- .env.example                            # Environment variable template
-`-- requirements.txt                        # Python dependencies
+├── production/                    # production scaffold
+│   ├── src/attrisense/            # package: compare, fairness, causal_uplift,
+│   │                              #          multilingual_rag, nl_sql_*, theme, …
+│   ├── tests/                     # 31 pytest tests
+│   ├── streamlit_app.py        # production dashboard
+│   ├── pyproject.toml             # [dev], [causal], [docs] extras
+│   ├── Makefile                   # pipeline / run / test / docker / docs
+│   └── Dockerfile                 # python:3.11-slim
+│
+├── docs/                          # MkDocs Material site
+│   ├── architecture/  features/  design/  operations/  reference/  ethics/
+│   ├── images/        diagrams/   # screenshots + generated PNGs
+│   └── quickstart.md  troubleshooting.md  faq.md  glossary.md  roadmap.md
+│
+├── archive/                       # original demo artifacts (preserved)
+├── assets/                        # screenshots + diagrams
+├── outputs/                       # fairness reports, eval reports, diagrams
+├── scripts/                       # generate_doc_diagrams.py, …
+│
+├── streamlit_app.py               # original demo dashboard
+├── train_retention_risk_model.py  # ML pipeline entry point
+├── generate_demo_workforce_data.py
+├── natural_language_sql.py
+├── requirements.txt
+└── README.md  ← you are here
 ```
 
-## How to Read the Code
+---
 
-Start here if you are new to the repo:
+## Contributing
 
-1. `config.py` defines shared filenames, table names, and risk thresholds.
-2. `generate_demo_workforce_data.py` creates safe synthetic employee data.
-3. `train_retention_risk_model.py` trains the model and writes predictions into SQLite.
-4. `streamlit_app.py` loads SQLite data and renders the product dashboard.
-5. `natural_language_sql.py` powers the optional AI Assistant with read-only SQL guardrails.
-6. `create_readme_assets.py` regenerates the README images and output proof.
-7. `launch_streamlit_app.py` is the single command-line app launcher.
+PRs welcome. Before opening one:
 
-Every root Python function has a docstring, and complex logic includes beginner-friendly inline comments.
+1. `pytest production/tests/` must be green.
+2. `ruff check` must pass.
+3. Touched a feature? Update its [`docs/features/<name>.md`](docs/features/).
+4. Touched the model? Update the [model card](docs/ethics/model-card.md).
+5. Read [docs/contributing.md](docs/contributing.md) for the full checklist.
 
-## Production Notes
+Items deliberately **not** on the roadmap (auto-mitigated fairness, MLflow, Airflow, GraphQL) are listed in [docs/roadmap.md](docs/roadmap.md#deliberately-not-on-the-list) — please don't surprise us.
 
-- `.env` is ignored and should never be committed.
-- The included records are synthetic and safe for demos.
-- The AI SQL path validates generated SQL and only runs read-only queries.
-- SQLite is used for local simplicity; the same table contract can move to Postgres, Snowflake, or BigQuery.
-- Generated README assets live in `assets/`; run logs and metrics live in `outputs/`.
-- The model is intentionally interpretable and easy to replace with richer HR features.
+---
 
-## Roadmap
+## License
 
-- Add model evaluation reports and CI quality gates.
-- Add prescriptive retention playbooks connected to SHAP primary drivers.
-- Add salary-weighted exposure forecasting by department and manager group.
-- Add role-based access for HR partners and executives.
-- Add deployment manifests for Streamlit Community Cloud and container platforms.
-- Add automated dashboard screenshot refresh for README assets.
+MIT — see [LICENSE](LICENSE).
 
-## License and Data
+The synthetic dataset, model, and all generated outputs are also released under MIT. The dashboard's evaluation against any **real** workforce data must comply with applicable employment, privacy, and AEDT (Automated Employment Decision Tool) regulations in your jurisdiction.
 
-This repository is a portfolio/demo system. All included employee records are synthetic and should be replaced with governed HR data connectors before real-world deployment.
+---
+
+<div align="center">
+
+**Built with explainability, audited for fairness, designed to fail gracefully.**
+
+[Quickstart](docs/quickstart.md) · [Architecture](docs/architecture/overview.md) · [Ethics](docs/ethics/fairness-policy.md) · [Roadmap](docs/roadmap.md)
+
+</div>

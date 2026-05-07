@@ -1,0 +1,45 @@
+NL-SQL — Text-to-Database (ASCII)
+===================================
+
+Two-tier strategy with sandbox.
+
+   +----------------------+
+   | "show me high risk   |
+   |  in manufacturing"   |
+   +----------+-----------+
+              |
+              v
+   +----------------------+         OPENAI_API_KEY set?
+   | reachability check   |---------+
+   +----------+-----------+         |
+              |                     |
+       reachable                  not reachable
+              |                     |
+              v                     v
+   +-------------------+   +-------------------+
+   | LangChain SQL     |   | TF-IDF gold       |
+   | chain over OpenAI |   | question fallback |
+   |                   |   | (50 Q&A pairs)    |
+   +---------+---------+   +---------+---------+
+             |                       |
+             +-----------+-----------+
+                         |
+                         v
+            +-------------------------+
+            | SANDBOX                 |
+            |  - sqlite PRAGMA        |
+            |    query_only=ON        |
+            |  - allow-list: SELECT   |
+            |    only                 |
+            |  - row limit (200)      |
+            +------------+------------+
+                         |
+                         v
+                +----------------+
+                | execute SQL    |
+                | return rows +  |
+                | sql + conf.    |
+                +----------------+
+
+Without the sandbox, an LLM-generated SQL is a SQL-injection vector.
+The sandbox is non-negotiable.

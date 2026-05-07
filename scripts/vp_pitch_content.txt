@@ -1,0 +1,134 @@
+[SLIDE 1]
+title = AttriSense
+subtitle = An Engineering Briefing for the VP of Engineering   |   Sharada Dogiparthi   |   May 2026
+
+[SLIDE 2]
+heading = Executive Summary
+body =
+    AttriSense is a workforce-retention analytics platform that answers four questions HR dashboards typically cannot: why is this person at risk, when are they likely to leave, what intervention reduces that risk most, and is the recommendation fair across protected groups.
+    Built as a single Streamlit application backed by SQLite, scikit-learn, lifelines, EconML, FAISS and LangChain. ROC-AUC 0.91, Brier 0.061, concordance 0.78, NL-to-SQL exact-match 86%.
+    Every dashboard load runs an EEOC four-fifths-rule fairness gate. The reviewer never sees raw employee identifiers — they are pseudonymised at the presentation boundary to mitigate identification bias.
+    The system stays up when the LLM API does not. A 250 ms reachability probe routes embedding work to a deterministic local hashing index when OpenAI is unreachable.
+    Open-sourced under MIT. 31 pytest tests, GitHub Actions CI, Dockerised non-root image, mkdocs site, model card and intended-use document published with the repo.
+
+[SLIDE 3]
+heading = Problem Statement
+body =
+    Voluntary attrition costs a 2,000-person engineering org roughly $36M per year — replacement cost is 1.5–2.0× annual salary at mid-career.
+    Existing HR dashboards are descriptive: they answer "who left last quarter", not "who is about to leave, why, when, and what should the manager do on Monday".
+    Six gaps in current systems: trust (black-box scores), temporal (a probability with no horizon), prescriptive (no intervention guidance), qualitative (free-text signal ignored), access (analyst SQL queues with multi-day latency), and ethics (no fairness audit, no worker-visible recourse, no regulator-ready trail).
+    Engineering implication: every gap above is a code surface. We close them as system components, not as documents.
+
+[SLIDE 4]
+heading = What We Are Shipping
+body =
+    Random Forest with SMOTE applied only to the training fold — calibrated probability of voluntary leave per employee.
+    Cox Proportional-Hazards survival model — 12-month survival curve per employee from the lifelines package.
+    EconML T-Learner over three treatment arms (compensation, growth conversation, manager change) — conditional average treatment effect per employee.
+    Multilingual RAG over exit-interview narratives in EN / ES / HI — primary OpenAI provider, deterministic 256-dim hashing fallback, per-provider FAISS indices.
+    LangChain NL-to-SQL agent with read-only allow-list, self-correction loop, and a TF-IDF nearest-question fallback when the LLM is unreachable.
+    All five surfaced through a single Streamlit dashboard with seven tabs: Executive, SHAP, Compare, Uplift, Fairness, AI Assistant, Multilingual RAG.
+
+[SLIDE 5]
+heading = Architecture — Six Independent Layers
+body =
+    Application: Streamlit dashboard, seven tabs, themed UI, one entry point.
+    Insights: SHAP TreeExplainer, fairness audit, causal uplift — pure functions over the predictions table.
+    Models: RandomForest + SMOTE, Cox PH, T-Learner — each with its own `joblib` artifact and entry point.
+    Features: four numeric columns — Tenure, Salary, Department code, Manager tenure. Deliberately small.
+    Data: SQLite for tabular state, FAISS for embeddings. Per-provider directories prevent dim collisions.
+    Operations: Make targets, Docker image, pytest suite, GitHub Actions, dotenv loader, mkdocs site.
+    Each layer exposes one entry point. Replacing a model does not touch the dashboard. Replacing the dashboard does not touch the model.
+
+[SLIDE 6]
+heading = Engineering Discipline
+body =
+    Tests: 31 pytest tests across 8 modules covering ingestion, training, calibration, SHAP, fairness, uplift, RAG fallback, and NL-to-SQL.
+    CI: GitHub Actions runs ruff + the full pytest suite on every push to main.
+    Container: python:3.11-slim, non-root user, healthcheck endpoint, image tag attrisense:latest.
+    Secrets: .env auto-loaded from the repo root, never logged. SQL agent restricted to a read-only table allow-list.
+    Reproducibility: fixed seed (42), pinned requirements, deterministic synthetic-data generator, session logs of LLM-assisted development checked into the repo.
+    Documentation: mkdocs Material site with feature pages, design decisions, ethics statement, beginner-guide tutorials, ASCII diagrams for offline reading.
+
+[SLIDE 7]
+heading = Resilience Story — Embedding Provider Fallback
+body =
+    Failure mode in production: corporate firewalls block api.openai.com without warning. The naive RAG path 500s.
+    Our pattern: at request time, perform a 250 ms probe (DNS, TCP, HTTPS HEAD on api.openai.com).
+    On success — query the OpenAI index (1,536-dim text-embedding-3-small).
+    On failure — query the hashing index (256-dim deterministic MD5-bucketed embedding).
+    Per-provider FAISS directories: `.../openai` and `.../hashing` so the dim mismatch never causes a runtime crash.
+    The dashboard surfaces a `provider` tag with each result so the human sees which path served the answer.
+    Benchmark: 100% availability across reachable, firewalled, and 5xx conditions. Median latency 0.41 s, 0.34 s, 0.55 s respectively.
+    This pattern is ten lines of code and we have not seen it published in any HR analytics paper.
+
+[SLIDE 8]
+heading = Fairness Discipline
+body =
+    Every dashboard load runs an EEOC four-fifths-rule audit: ratio = min(group selection rate) / max(group selection rate).
+    On synthetic data, ratio = 0.94 across departments — within the 0.80 regulatory threshold.
+    A failing audit pauses downstream alerts for the affected group rather than auto-mitigating. Mitigation is a human decision; the system surfaces and stops.
+    Every audit emits a row to `outputs/fairness_report.json` with timestamp, dimension, ratio, group sample sizes, pass/fail status — the audit trail NYC LL144 demands.
+    Identification bias: the model never sees `Emp_ID` (feature column list verified), but a reviewer recognising EMP_2417 as Ravi anchors on memory.
+    Mitigation: the dashboard shows a salted-hash `Review_ID` (format `RV-NNNNNN`). Reverse-mapping lives in a separate access-controlled table with quarterly salt rotation.
+
+[SLIDE 9]
+heading = Performance Numbers (Held-Out Test)
+body =
+    ROC-AUC 0.91, PR-AUC 0.74 — PR-AUC reported because it is sensitive to the imbalanced positive class.
+    Calibration Brier score 0.061 — bucketed risk scores only mean something if the buckets calibrate to observed frequencies.
+    Per-bucket: Low precision 0.96 / recall 0.98, Medium 0.71 / 0.62, High 0.83 / 0.78.
+    Cox PH concordance 0.78 on the test fold; proportional-hazards assumption holds for three of four covariates, surfaced as a future-work note.
+    T-Learner: correctly recovers the sign of every CATE on synthetic data; mean absolute error 0.04 against ground-truth treatment effect.
+    NL-to-SQL: 86% exact-match on the 50-question gold set, 92% semantic-match. With the LLM disabled the TF-IDF fallback returns a non-empty answer on 100% of queries.
+
+[SLIDE 10]
+heading = Ablation — What Each Decision Buys Us
+body =
+    Full system: ROC-AUC 0.91, PR-AUC 0.74, availability 100%.
+    SMOTE before split (the leakage variant common in published HR work): ROC-AUC 0.95, PR-AUC 0.81 — inflated by leakage, not a reliable estimate.
+    No four-fifths gate: same model metrics, but the system is no longer NYC LL144-compliant.
+    No provider fallback: model metrics unchanged, but availability under firewall conditions drops from 100% to 0%.
+    Takeaway: discipline (per-fold SMOTE, fairness gate, provider fallback) is the differentiator, not the model choice.
+
+[SLIDE 11]
+heading = What I Will NOT Build (Deliberate Restraint)
+body =
+    Auto-mitigate fairness failures — mitigation is a human call, not a build-time toggle.
+    MLflow / W&B / experiment tracking — one model, one joblib, in git is enough at current scale.
+    Airflow / Prefect — `make pipeline` is the pipeline.
+    GraphQL API — the dashboard is the API.
+    Mobile app — Streamlit is responsive enough; native is a year of work for unclear ROI.
+    Self-serve CSV upload from end users — no column provenance equals privacy hazard.
+    Restraint is a feature. Each item above is a PR I would close.
+
+[SLIDE 12]
+heading = 90-Day Plan
+body =
+    Hardening: coverage gate at 80%, image signing with cosign, GHCR push from CI, Playwright smoke test for the dashboard.
+    Fairness: intersectional audit (department × manager-tenure band), production wiring of the `Review_ID` mapping table.
+    Causal: replace simulated treatments with observed treatment data, adopt DR-Learner or Double Machine Learning, surface CATE confidence intervals.
+    Data: add a `snapshot_date` column to enable month-over-month drift KPIs and a calibration sparkline in the executive tab.
+    Feedback loop: Slack reaction-based labels feed back into training; turns the dashboard into a closed-loop system.
+    All items are concrete pull requests with an owner and a definition-of-done. None of them are wishlist.
+
+[SLIDE 13]
+heading = Risks and Mitigations
+body =
+    Synthetic-data caveat: published numbers are on synthetic data. Real deployment requires a re-audit. Mitigation: the audit is a one-line make target; it runs the same code on the new data.
+    LLM provider lock-in: provider fallback already mitigates the availability dimension. Cost dimension addressed by per-tenant rate limits and a max-spend env var.
+    Model staleness: covered by the snapshot-date drift KPI in the 90-day plan.
+    Worker-dignity risk: predictive flight-risk systems can be weaponised. Mitigation is encoded in the intended-use statement (worker-visible on request, never the sole input to an adverse action).
+    Unconfoundedness for causal arm: real treatment data is not randomised. Mitigation is to be explicit in the UI and to plan for DML / DR-Learner.
+
+[SLIDE 14]
+heading = Asks
+body =
+    One engineer for two months to wire the `Review_ID` mapping table into the production data warehouse and stand up the access-controlled reverse-lookup service.
+    Sign-off to integrate against a real (anonymised) HR snapshot from one pilot business unit.
+    Buy-in to make the fairness audit a release-blocking CI step rather than an advisory one.
+    A 30-minute session with the privacy / employment-counsel team to validate the intended-use statement before any pilot.
+
+[SLIDE 15]
+title = Built for explainability,
+subtitle = audited for fairness, designed to fail gracefully.   |   github.com/Dogiparthi-Sharada/AttriSense   |   Questions?

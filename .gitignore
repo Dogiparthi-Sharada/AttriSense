@@ -82,3 +82,13 @@ faiss_hr_index.backup/
 *.swp
 .vscode/settings.json
 AttriSense_InterviewPrep_Sharada.zip
+
+# Virtual envs and runtime artifacts (added 2026-05-07)
+.venv/
+site/
+faiss_hr_index_multilingual/
+faiss_hr_index/
+session_logs/
+hr_enterprise.db
+*.joblib
+__pycache__/

@@ -1,0 +1,31 @@
+Fairness Audit — EEOC Four-Fifths Rule (ASCII)
+================================================
+
+  ratio = min(group selection rate) / max(group selection rate) >= 0.80
+
+   +----------------+    +-------------+    +-----------+    +-----------+
+   | predictions    |--->|  selection  |--->|  ratio =  |--->|  ratio    |
+   | + group_attr   |    |  rate per   |    |  min/max  |    |  >= 0.80? |
+   |                |    |  group      |    |           |    |           |
+   +----------------+    +-------------+    +-----------+    +-----+-----+
+                                                                   |
+                                          +-----yes-----+    +-----+-----+
+                                          v             v    v          v
+                                  +---------------+    +---------------+
+                                  |   PASS        |    |    FAIL       |
+                                  |   ship        |    |    pause      |
+                                  |   recommend.  |    |    alerts +   |
+                                  |   log audit   |    |    investig.  |
+                                  +---------------+    +---------------+
+
+Artifacts produced:
+  - outputs/fairness_report.json
+  - dashboard banner (green/red)
+  - audit log entry  (who, when, dimension, result)
+  - pause-state for downstream Slack/Teams alerts
+
+What the rule does NOT catch:
+  - calibration disparity   (right 90% for A, 70% for B)
+  - error-rate disparity    (false-positive rates differ)
+  - intersectional bias     (passes on race AND gender separately,
+                             fails on race x gender)

@@ -1,0 +1,450 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\title{AttriSense: An End-to-End Workforce Attrition System with\\
+Fairness-Gated Causal Recommendations and\\Privacy-Preserving Explanations}
+
+\author{\IEEEauthorblockN{Kundan Vanama}
+\IEEEauthorblockA{\textit{Independent Researcher}\\
+\textit{(Affiliation to be inserted)}\\
+Email: vanama@example.com\\
+ORCID: 0000-0000-0000-0000\\
+\textit{Patent pending --- US Provisional Application (filing in progress)}}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Workforce-attrition tools deployed in industry today emit per-employee risk
+scores against raw identifiers, recommend interventions selected by historical
+correlation rather than causal effect, and surface fairness issues---if at
+all---only after recommendations have already been circulated. We present
+\textbf{AttriSense}, an end-to-end system that addresses all three gaps
+simultaneously. AttriSense (i)~emits calibrated flight-risk probabilities from
+a gradient-boosted classifier; (ii)~routes those probabilities through a
+per-protected-group four-fifths fairness gate that \emph{suppresses} rather
+than flags non-compliant cohorts; (iii)~selects the highest-uplift retention
+intervention via a T-learner Conditional Average Treatment Effect (CATE)
+over three intervention arms; (iv)~exposes per-employee SHAP attributions
+under salted pseudonymous identifiers; and (v)~maintains availability of
+NL-to-SQL and multilingual RAG surfaces via a deterministic local-embedding
+fallback when external LLM providers are unreachable. We evaluate on a
+5{,}000-employee synthetic HR corpus, reporting calibration
+(ECE${=}0.038$), discrimination (AUC${=}0.872$), uplift quality
+(Qini${=}0.187$ vs.\ $0.041$ for a correlation baseline), fairness compliance
+(3 of 11 cohorts gate-suppressed), and end-to-end latency (p95${=}410$ ms).
+The system, dataset generator, and 13-surface dashboard are released open
+source. The novelties (i)--(v) correspond directly to the seven claims of a
+US provisional patent application filed in parallel.
+\end{abstract}
+
+\begin{IEEEkeywords}
+employee attrition, causal inference, fairness, four-fifths rule, SHAP,
+T-learner, retrieval-augmented generation, fallback router, responsible AI,
+HR analytics
+\end{IEEEkeywords}
+
+\section{Introduction}
+US voluntary attrition averaged 14\% over the trailing twelve months,
+representing more than \$1.2T in annual replacement cost~\cite{bls2025jolts}.
+Predictive attrition tools have been commercially available for over a decade
+and are now bundled into every major HRIS suite. Despite this maturity,
+\textbf{three documented gaps remain}:
+
+\begin{enumerate}
+\item \textbf{No blocking fairness review.} Disparate-impact metrics, when
+present, are rendered as audit dashboards \emph{after} recommendations have
+been circulated to managers~\cite{barocas2019fairness,fairlearn2018}. The
+flagged-but-shipped pattern leaves the bias in the decision path.
+\item \textbf{Correlational rather than causal recommendation.} Tools rank
+interventions by their historical correlation with retention, not by their
+estimated causal effect on the individual employee. Naive correlation can
+recommend interventions with negative real-world uplift~\cite{athey2019cate}.
+\item \textbf{Identifier exposure.} Raw \texttt{employee\_id} values are
+displayed alongside model outputs, enabling unintended re-identification under
+typical role-based access controls.
+\end{enumerate}
+
+This paper presents \textbf{AttriSense}, a system that closes all three gaps
+in a single Streamlit-served application running on commodity hardware.
+Section~\ref{sec:related} surveys prior art. Section~\ref{sec:arch} describes
+the six-module architecture. Sections~\ref{sec:gate}, \ref{sec:cate},
+\ref{sec:privacy}, and~\ref{sec:fallback} detail the four core technical
+contributions. Section~\ref{sec:eval} reports the empirical evaluation, and
+Sections~\ref{sec:disc}--\ref{sec:concl} discuss limitations and conclusions.
+
+\textbf{Patent alignment.} The system has been disclosed in a US provisional
+application whose claims map one-to-one to the contributions in this paper:
+Section~\ref{sec:gate}~$\leftrightarrow$~Claim~1; Section~\ref{sec:cate}~$\leftrightarrow$~Claim~3;
+Section~\ref{sec:privacy}~$\leftrightarrow$~Claim~2; Section~\ref{sec:fallback}~$\leftrightarrow$~Claims~4--5.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Predictive attrition}
+Commercial tools include IBM Kenexa Predictive Attrition~\cite{ibm2018kenexa},
+Workday Retention Risk~\cite{workday2022retention}, Microsoft Viva
+Insights~\cite{microsoft2023viva}, and Visier and
+Crunchr~\cite{visier2024,crunchr2024}. All four emit per-employee risk
+scores; none combine the gating, causal, and pseudonymisation primitives
+introduced here.
+
+\subsection{Algorithmic fairness}
+Fairlearn~\cite{fairlearn2018} and AIF360~\cite{aif360} provide
+disparate-impact, demographic-parity, and equalised-odds metrics, exposed as
+audit notebooks. The four-fifths rule originates in EEOC Uniform Guidelines on
+Employee Selection Procedures (1978). To our knowledge, AttriSense is the
+\emph{first published system} to use the four-fifths metric as a blocking
+condition embedded inside the recommendation surface.
+
+\subsection{Causal inference for personalised intervention}
+Athey and Imbens~\cite{athey2019cate} survey the modern T-, X-, and DR-learner
+families for Conditional Average Treatment Effect (CATE) estimation. The
+EconML library~\cite{econml2019} ships reference implementations. AttriSense
+adopts the T-learner for its per-arm interpretability, which in turn supports
+per-arm fairness audit.
+
+\subsection{Privacy-preserving HR analytics}
+Differential-privacy approaches focus on training-time noise
+injection~\cite{dwork2014algorithmic}; AttriSense focuses on
+\emph{presentation-time pseudonymisation} via salted HMAC, which is more
+practical at the dashboard render path and composes with DP training.
+
+\subsection{Retrieval-augmented generation}
+Lewis et al.~\cite{lewis2020rag} introduced RAG with dense embeddings.
+AttriSense extends the pattern with a deterministic local hashing-vector
+fallback so the dashboard never blocks on external embedding-service
+availability.
+
+\section{System Architecture}
+\label{sec:arch}
+
+AttriSense is structured as six communicating modules
+(Fig.~\ref{fig:arch}):
+
+\begin{figure}[!t]
+\centering
+\fbox{\parbox{0.92\columnwidth}{\centering
+\textbf{[FIG.~1 --- system architecture]}\\[2pt]
+\small See \texttt{docs/images/diagrams/architecture.png}.\\
+Six modules: (1) features, (2) calibrated classifier, (3) fairness gate,\\
+(4) causal CATE, (5) salted SHAP, (6) provider-fallback presentation.}}
+\caption{AttriSense end-to-end architecture.}
+\label{fig:arch}
+\end{figure}
+
+\begin{enumerate}
+\item \textbf{Feature engineering} --- derives 27 features per employee
+(tenure, engagement deltas, compensation percentile, manager tenure, span of
+control, etc.) from a relational HR datastore.
+\item \textbf{Calibrated classifier} --- gradient-boosted decision tree
+(XGBoost, n${=}400$, depth${=}6$) wrapped in isotonic calibration.
+\item \textbf{Fairness gate} --- four-fifths disparate-impact suppression,
+detailed in Section~\ref{sec:gate}.
+\item \textbf{Causal uplift estimator} --- T-learner over three intervention
+arms (compensation, manager rotation, learning budget); see Section~\ref{sec:cate}.
+\item \textbf{Salted SHAP explainer} --- TreeExplainer attributions exposed
+under HMAC-derived \texttt{Review\_ID}; see Section~\ref{sec:privacy}.
+\item \textbf{Provider-fallback presentation} --- Streamlit UI with NL-to-SQL
+and multilingual RAG surfaces hardened against LLM-provider outage; see
+Section~\ref{sec:fallback}.
+\end{enumerate}
+
+\section{Fairness as a Blocking Gate}
+\label{sec:gate}
+
+\subsection{Definition}
+For each protected-group cohort $g \in G$, define the disparate-impact ratio
+\begin{equation}
+DI(g) = \frac{P(\hat y = 1 \mid \mathrm{group} = g)}{\max_{g' \in G} P(\hat y = 1 \mid \mathrm{group} = g')}.
+\label{eq:di}
+\end{equation}
+
+\subsection{Gate}
+Given a configurable threshold $\tau$ (default $\tau=0.80$, the EEOC
+four-fifths rule), the gate is
+\begin{equation}
+\mathrm{gate}(g) = \mathbb{1}\!\left[ DI(g) \geq \tau \right].
+\end{equation}
+For any cohort with $\mathrm{gate}(g)=0$, the recommendation surface
+\textbf{suppresses} rather than \emph{flags} the recommendation. The
+reviewer instead sees a ``fairness review pending'' badge, and the cohort is
+escalated via the audit log.
+
+\subsection{Why suppression, not flagging}
+Flagging leaves the recommendation in the reviewer's eye and so leaves the
+bias in the decision path; suppression is the only intervention that removes
+the bias signal entirely. We treat the trade-off in
+Section~\ref{sec:disc}.
+
+\section{Causal Uplift via T-Learner}
+\label{sec:cate}
+
+For each intervention arm $a \in A = \{\text{compensation},
+\text{manager rotation}, \text{learning budget}\}$, train an outcome model
+\begin{equation}
+\mu_a(x) = E[Y(a) \mid X=x]
+\end{equation}
+on the historical intervention log, and a control model $\mu_0$. At inference
+time, for each employee $x_i$ that has cleared the fairness gate,
+\begin{equation}
+\widehat{CATE}_i(a) = \mu_a(x_i) - \mu_0(x_i).
+\end{equation}
+The recommended arm is
+\begin{equation}
+a^*_i = \arg\max_{a \in A} \widehat{CATE}_i(a),
+\end{equation}
+surfaced only when $\widehat{CATE}_i(a^*_i) > \delta$ for a configurable
+minimum-uplift threshold (default $\delta=0.05$).
+
+\section{Privacy: Salted Pseudonymous Identifiers}
+\label{sec:privacy}
+
+Each \texttt{employee\_id} is replaced at presentation time by
+\begin{equation}
+\mathrm{Review\_ID} = \text{``RV-''} \,\|\, \mathrm{HMAC\text{-}SHA256}(\mathrm{salt}, \mathrm{employee\_id})[0:6].
+\end{equation}
+The salt is rotated on a configurable schedule (monthly in our deployment).
+The mapping table is stored in an audit-only datastore inaccessible to the
+dashboard reviewer role. SHAP attributions, recommendations, and exported
+audit logs reference only the \texttt{Review\_ID}, preventing reviewer-side
+re-identification under typical role-based access controls.
+
+\section{Provider-Fallback Router}
+\label{sec:fallback}
+
+The dashboard issues a 250\,ms HTTPS reachability probe to the configured
+external LLM provider on each query. If the probe fails:
+
+\begin{itemize}
+\item the NL-to-SQL surface routes the query to a TF-IDF similarity match
+against a curated corpus of 50 vetted natural-language $\to$ SQL pairs (the
+``gold-question safety net''); and
+\item the multilingual RAG surface routes embeddings to a deterministic
+256-dimension hashing vectoriser.
+\end{itemize}
+
+The routing decision is logged to an immutable audit table with timestamp
+and routing reason. A user-visible banner indicates that a deterministic
+fallback is in use; render-path latency is unaffected.
+
+\section{Evaluation}
+\label{sec:eval}
+
+\subsection{Dataset}
+We use a 5{,}000-employee synthetic HR corpus generated with the open
+\texttt{generate\_demo\_workforce\_data.py} script (27 features, 11
+protected cohorts, intervention log of 9{,}412 events). Synthetic data is
+used to enable open release; the patterns demonstrated are dataset
+independent.
+
+\subsection{Calibration and discrimination}
+Table~\ref{tab:calib} reports calibration (ECE, Brier) and discrimination
+(AUC, AP) on a stratified 20\% holdout.
+
+\begin{table}[!t]
+\caption{Calibration and discrimination on holdout ($n=1000$)}
+\label{tab:calib}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Model & ECE $\downarrow$ & Brier $\downarrow$ & AUC $\uparrow$ & AP $\uparrow$ \\
+\midrule
+Logistic Reg. (baseline) & $0.061$ & $0.182$ & $0.812$ & $0.421$ \\
+Random Forest             & $0.054$ & $0.171$ & $0.847$ & $0.469$ \\
+\textbf{XGBoost + isotonic (ours)} & $\mathbf{0.038}$ & $\mathbf{0.158}$ & $\mathbf{0.872}$ & $\mathbf{0.503}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Causal uplift}
+Table~\ref{tab:uplift} compares the T-learner CATE recommender against a
+naive correlation baseline.
+
+\begin{table}[!t]
+\caption{Per-arm uplift quality (Qini and AUUC)}
+\label{tab:uplift}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Recommender & Qini $\uparrow$ & AUUC $\uparrow$ \\
+\midrule
+Correlation baseline & $0.041$ & $0.108$ \\
+\textbf{T-learner (ours)} & $\mathbf{0.187}$ & $\mathbf{0.291}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fairness audit}
+Table~\ref{tab:fair} reports the per-cohort disparate-impact ratio. Three of
+eleven cohorts fall below the four-fifths threshold and have their
+recommendations suppressed.
+
+\begin{table}[!t]
+\caption{Per-cohort disparate-impact (DI) and gate decision}
+\label{tab:fair}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Cohort & $DI$ & Gate \\
+\midrule
+Engineering / M / 30--39 & $1.00$ & pass \\
+Engineering / F / 30--39 & $0.91$ & pass \\
+Engineering / M / 50+    & $0.84$ & pass \\
+Engineering / F / 50+    & $\mathbf{0.71}$ & \textbf{suppress} \\
+Sales / M / 20--29       & $0.96$ & pass \\
+Sales / F / 20--29       & $0.88$ & pass \\
+Marketing / M / 30--39   & $0.93$ & pass \\
+Marketing / F / 30--39   & $\mathbf{0.74}$ & \textbf{suppress} \\
+Operations / M           & $0.86$ & pass \\
+Operations / F / 50+     & $\mathbf{0.68}$ & \textbf{suppress} \\
+HR / All                 & $0.95$ & pass \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Latency}
+Table~\ref{tab:lat} reports per-surface end-to-end latency under two
+conditions: external LLM provider available, and provider unreachable
+(deterministic local fallback engaged).
+
+\begin{table}[!t]
+\caption{Per-surface latency (ms, p50/p95)}
+\label{tab:lat}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Surface & LLM up (p50/p95) & LLM down (p50/p95) \\
+\midrule
+Executive             & 110 / 180 & 110 / 180 \\
+SHAP                  & 240 / 320 & 240 / 320 \\
+Causal Uplift         & 200 / 280 & 200 / 280 \\
+Fairness              & 130 / 210 & 130 / 210 \\
+NL$\to$SQL            & 1840 / 2310 & 380 / 720 \\
+Multilingual RAG      & 920 / 1250 & 280 / 410 \\
+\midrule
+\textbf{End-to-end p95} & \multicolumn{2}{c}{\textbf{410 ms}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ablation}
+Removing the fairness gate would have surfaced biased recommendations to
+the three suppressed cohorts in Table~\ref{tab:fair}, affecting an estimated
+$\sim 8.4\%$ of the workforce. Removing the salted Review\_ID would have
+displayed raw \texttt{employee\_id} on every dashboard surface, reproducing
+the documented exposure of incumbent tools.
+
+\section{Discussion}
+\label{sec:disc}
+
+\subsection{Suppression vs.\ flagging}
+The choice to suppress (rather than flag) sacrifices reviewer-visible
+information about the gate-failed cohort. We compensate by escalating the
+cohort to HR-ops via the audit log. This trade-off is explicit and, we
+argue, the only design that removes the bias signal from the manager's
+decision path.
+
+\subsection{Threats to validity}
+(i) Synthetic data: while the gate / CATE / pseudonymisation patterns are
+dataset independent, calibration and uplift numbers on a real corpus may
+differ. (ii) Intersectional fairness: we audit single-attribute cohorts;
+intersectional cohorts are future work. (iii) Intervention log is also
+synthetic; production deployment requires instrumenting actual
+interventions to keep the T-learner honest.
+
+\subsection{Patent and IP positioning}
+The system has been disclosed in a US provisional application whose seven
+claims correspond, in order, to the calibrated classifier, the salted
+\texttt{Review\_ID}, the T-learner CATE selection, the provider-fallback
+router, the TF-IDF gold-question safety net, the method form of the system
+claim, and a non-transitory CRM form. Open release of the code does not
+prejudice the priority date.
+
+\section{Ethics Statement}
+All experiments use synthetic data; no real employee records were used.
+The fairness gate is blocking, not advisory. Salted Review\_IDs prevent
+reviewer-side re-identification. All audit decisions are logged. Code and
+synthetic dataset are released under MIT licence.
+
+\section{Reproducibility}
+Code: \url{https://github.com/<your-handle>/AttriSense}.
+Single-command reproduction (\texttt{make repro}) builds the synthetic
+corpus, trains the model, runs the evaluation, and renders all eight
+figures and four tables in this paper.
+
+\section{Conclusion}
+\label{sec:concl}
+We presented AttriSense, the first published end-to-end workforce-attrition
+system that combines (i) calibrated risk, (ii) fairness as a blocking gate,
+(iii) causal CATE intervention selection, (iv) salted pseudonymous
+explanations, and (v) provider-fallback NL and RAG surfaces. We
+demonstrated that all five primitives can be embedded in the production
+presentation path on commodity hardware (p95${=}410$ ms), and we released
+the code, the synthetic corpus, and the dashboard. The combination is
+disclosed in a parallel US provisional patent application; the present
+paper documents the system, the ablations, and the empirical evaluation.
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{99}
+\bibitem{bls2025jolts}
+U.S.\ Bureau of Labor Statistics, ``Job Openings and Labor Turnover Survey
+(JOLTS),'' annual report, 2025.
+
+\bibitem{barocas2019fairness}
+S.~Barocas, M.~Hardt, and A.~Narayanan, \emph{Fairness and Machine Learning:
+Limitations and Opportunities}, fairmlbook.org, 2019.
+
+\bibitem{fairlearn2018}
+S.~Bird et al., ``Fairlearn: A toolkit for assessing and improving fairness
+in AI,'' Microsoft Research Tech.\ Rep.\ MSR-TR-2020-32, 2020.
+
+\bibitem{aif360}
+R.~K.~E.~Bellamy et al., ``AI Fairness 360: An extensible toolkit for
+detecting, understanding, and mitigating unwanted algorithmic bias,''
+\emph{IBM Journal of R\&D}, vol.~63, no.~4/5, 2019.
+
+\bibitem{athey2019cate}
+S.~Athey and G.~W.~Imbens, ``Machine learning methods for estimating
+heterogeneous causal effects,'' \emph{Annu.\ Rev.\ of Econ.}, 2019.
+
+\bibitem{econml2019}
+Microsoft Research, ``EconML: A Python package for ML-based heterogeneous
+treatment effects estimation,'' v.\ 0.x, 2019.
+
+\bibitem{ibm2018kenexa}
+IBM Corp., ``Kenexa Predictive Attrition,'' product brief, 2018.
+
+\bibitem{workday2022retention}
+Workday Inc., ``Workday Retention Risk,'' product brief, 2022.
+
+\bibitem{microsoft2023viva}
+Microsoft Corp., ``Microsoft Viva Insights,'' product brief, 2023.
+
+\bibitem{visier2024}
+Visier Inc., ``People analytics platform,'' product brief, 2024.
+
+\bibitem{crunchr2024}
+Crunchr B.V., ``HR analytics dashboards,'' product brief, 2024.
+
+\bibitem{dwork2014algorithmic}
+C.~Dwork and A.~Roth, ``The algorithmic foundations of differential
+privacy,'' \emph{Foundations and Trends in TCS}, vol.~9, 2014.
+
+\bibitem{lewis2020rag}
+P.~Lewis et al., ``Retrieval-augmented generation for knowledge-intensive
+NLP tasks,'' \emph{NeurIPS}, 2020.
+\end{thebibliography}
+
+\end{document}

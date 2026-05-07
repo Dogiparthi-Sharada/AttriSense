@@ -1,0 +1,12 @@
+venue,track,deadline_typical,acceptance_pct,fit_score_1to5,why_fit,paper_format
+IEEE BigData,Industry/Applications,Aug,28,5,Applied ML system with real-world deployment surface,IEEE 2-col 8pp
+ACM FAccT,Algorithmic accountability,Jan,25,5,Fairness-as-gate idea is squarely in scope,ACM 2-col 10pp
+KDD ADS,Applied Data Science,Feb,19,5,Causal CATE + production system fit ADS exactly,ACM 2-col 9pp
+ICDM,Industry,Jun,22,4,Mining-flavoured but accepts applied ML,IEEE 2-col 6pp
+CHI Late-Breaking Work,HCI/dashboards,Jan,35,3,Dashboard UX angle only,ACM extended abstract 6pp
+NeurIPS Datasets and Benchmarks,Datasets,Jun,20,3,Synthetic HR corpus release would qualify,NeurIPS template 9pp
+NAACL Industry Track,NLP,Jan,30,3,NL2SQL+RAG fallback story only,ACL template 8pp
+EMNLP Industry Track,NLP,May,32,3,Same as NAACL,ACL template 8pp
+WSDM,Web Search and Data Mining,Aug,18,3,Causal+recommendation overlap,ACM 2-col 9pp
+WWW,Industry,Oct,21,4,End-to-end system w/ fairness sits well,ACM 2-col 8pp
+arXiv,Preprint,Rolling,100,5,File the day patent provisional is in to lock priority + visibility,Author's choice

@@ -1,0 +1,24 @@
+SHAP Explanation — How a Prediction is Decomposed (ASCII)
+==========================================================
+
+Every per-employee prediction sums to:
+   baseline + sum(feature contributions)
+
+Example for EMP_2417 (final risk = 0.83):
+
+  baseline (avg risk for everyone)              0.32  ████████
+  + short tenure (7 months)                    +0.21  █████
+  + low salary (52k vs 78k median)             +0.18  ████
+  + Manufacturing dept                         +0.09  ██
+  + new manager (4 months)                     +0.03  █
+  ---------------------------------------------------
+  final risk for this employee                  0.83  ████████████████████
+
+Property guaranteed by SHAP:
+  the bars above always sum to (final - baseline)
+
+What SHAP says:
+  "this prediction depended on these features"
+What SHAP does NOT say:
+  "these features cause attrition"
+For causal questions use the T-Learner uplift module instead.

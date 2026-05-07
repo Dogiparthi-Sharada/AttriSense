@@ -1,0 +1,36 @@
+{
+  "Department": {
+    "dimension": "Department",
+    "disparate_impact_ratio": 0.20207638116425658,
+    "passes_four_fifths_rule": false,
+    "notes": [
+      "Disparate-impact ratio 0.20 is below the EEOC four-fifths rule threshold of 0.80. Investigate whether the underlying signal is acceptable."
+    ],
+    "groups": [
+      {
+        "group": "Manufacturing",
+        "sample_size": 3052,
+        "high_risk_rate": 0.13302752293577982,
+        "mean_predicted_probability": 0.2505733944954128,
+        "observed_turnover_rate": 0.1598951507208388,
+        "calibration_gap": 0.09067824377457404
+      },
+      {
+        "group": "Engineering",
+        "sample_size": 1204,
+        "high_risk_rate": 0.08305647840531562,
+        "mean_predicted_probability": 0.20912929125138427,
+        "observed_turnover_rate": 0.11212624584717608,
+        "calibration_gap": 0.09700304540420819
+      },
+      {
+        "group": "Sales",
+        "sample_size": 744,
+        "high_risk_rate": 0.026881720430107527,
+        "mean_predicted_probability": 0.11081989247311827,
+        "observed_turnover_rate": 0.09946236559139784,
+        "calibration_gap": 0.011357526881720426
+      }
+    ]
+  }
+}
