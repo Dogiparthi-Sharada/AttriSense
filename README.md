@@ -87,7 +87,7 @@ Side-by-side panel for two employees.
 ### Causal Uplift
 EconML T-learner over three treatment arms.
 
-![Uplift](docs/images/uplift.png)
+![Causal Uplift](docs/images/causal.png)
 
 </td>
 </tr>
@@ -123,7 +123,7 @@ EN / ES / HI exit-interview semantic search.
 ### Alert Mock + Ethics
 Slack/Teams card preview + model-card disclosure.
 
-![Alert](docs/images/alert.png)
+![Alert](docs/images/alerts.png)
 
 </td>
 </tr>
