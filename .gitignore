@@ -40,6 +40,11 @@ doc/*.png
 *.png
 !assets/
 !assets/*.png
+!docs/
+!docs/images/
+!docs/images/*.png
+!docs/images/diagrams/
+!docs/images/diagrams/*.png
 
 # Streamlit
 .streamlit/*
