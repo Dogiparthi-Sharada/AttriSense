@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/rag.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # RAG — retrieval-augmented generation
 
 > *"Find me the exit interviews where people complained about compensation, in any language."* — RAG turns that into a vector search + LLM combo.

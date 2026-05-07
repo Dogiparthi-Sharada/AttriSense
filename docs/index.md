@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/index.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # AttriSense
 
 > **Workforce intelligence for HR teams that want to retain people, not surveil them.**

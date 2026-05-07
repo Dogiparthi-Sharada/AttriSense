@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/nl-sql.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # NL→SQL — text-to-database
 
 > *"Show me the high-risk employees in Manufacturing"* → `SELECT * FROM workforce_predictions WHERE department='Manufacturing' AND risk_label='High Risk'`. Done well, this is delightful. Done poorly, it's a security incident.

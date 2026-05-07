@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/ai-assistant.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # AI Assistant
 
 > Natural language → SQL → table. Powered by LangChain + OpenAI when configured; gracefully falls back to a TF-IDF gold-question ranker when not.

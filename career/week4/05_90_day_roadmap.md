@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week4/05_90_day_roadmap.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 90-Day Roadmap — June 1 → August 30, 2026
 
 > **Purpose:** publish a 90-day forward plan in the repo as a public

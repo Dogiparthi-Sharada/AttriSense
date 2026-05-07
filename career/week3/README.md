@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week3/README.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Week 3 — Compound (May 18 – May 24, 2026)
 
 > **Anchor:** Tuesday May 19, 8:30 AM PT — the 8-slide

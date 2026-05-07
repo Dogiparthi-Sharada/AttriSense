@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/quickstart.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Quickstart
 
 Get the AttriSense dashboard running in **under five minutes** — on Windows, macOS, or Linux.

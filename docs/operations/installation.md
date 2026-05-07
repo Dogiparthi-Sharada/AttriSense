@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/operations/installation.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Installation
 
 > Three paths: local Python, Docker, or Streamlit Community Cloud.
@@ -179,7 +188,7 @@ For the full Docker walk-through see [Docker](docker.md).
 If your shell is `csh` or `tcsh`:
 
 - Use `source .venv/bin/activate.csh` (not `.sh`).
-- Multi-line `bash -c '...'` commands may need a wrapper script. See the [Vanama csh notes](../troubleshooting.md#csh-quirks) (well-documented warning sign in this codebase).
+- Multi-line `bash -c '...'` commands may need a wrapper script. See the [csh notes](../troubleshooting.md#csh-quirks) (well-documented warning sign in this codebase).
 
 ## Uninstall
 

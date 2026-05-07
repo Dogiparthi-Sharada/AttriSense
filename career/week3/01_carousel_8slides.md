@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week3/01_carousel_8slides.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Architecture Carousel — 8 Slides (Tue May 19, 8:30 AM PT)
 
 > **Format:** LinkedIn carousel, 1080×1080 per slide, PDF upload.

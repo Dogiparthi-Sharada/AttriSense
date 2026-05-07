@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/src/attrisense/gold_questions.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Gold-standard NL\u2192SQL questions for the AttriSense evaluation harness.
 
 Each entry contains:

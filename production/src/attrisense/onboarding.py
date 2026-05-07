@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/src/attrisense/onboarding.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """First-time-user onboarding tour for the AttriSense v2 dashboard.
 
 Streamlit doesn't have a real product-tour widget yet, so the tour is

@@ -1,9 +1,18 @@
+<!--
+AttriSense — patent/01_patent_strategy.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 01 — AttriSense Patent Strategy
 
 **Working title:** *Methods and Systems for Privacy-Preserving, Fairness-Gated,
 Causally-Validated Workforce Attrition Risk Estimation*
 
-**Inventor of record:** Kundan Vanama (and co-inventors as applicable)
+**Inventor of record:** Sharada Dogiparthi (and co-inventors as applicable)
 **Status:** Pre-filing — provisional draft ready in [`02_provisional_application_draft.md`](02_provisional_application_draft.md)
 **Recommended filing path:** **USPTO Provisional → 12-month Utility (Track One)**
 

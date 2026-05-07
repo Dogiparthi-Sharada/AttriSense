@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/07_demo_script.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 07 — Live Demo Script (7 minutes)
 
 For VP pitch, interview deep-dive, and patent-disclosure meetings.

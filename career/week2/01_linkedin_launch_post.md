@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week2/01_linkedin_launch_post.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # LinkedIn Launch Post — Tuesday May 12, 8:30 AM PT
 
 > **Length:** 1,300 chars (LinkedIn cap is 3,000; engagement curves

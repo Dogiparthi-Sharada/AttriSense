@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — paper/build_docx.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Build attrisense_ieee.docx from attrisense_ieee.md (python-docx).
 
 IEEE-conference style:
@@ -9,7 +18,7 @@ IEEE-conference style:
 
 Source of truth = attrisense_ieee.md (kept in sync from the .tex via pandoc).
 Run:
-    /global/gtsna_northeast6/vanama/repos/AttriSense/.venv/bin/python build_docx.py
+    .venv/bin/python build_docx.py
 """
 from __future__ import annotations
 

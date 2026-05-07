@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/03_research_paper_outline.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 03 — Research Paper Outline
 
 **Working title:** *AttriSense: An End-to-End Workforce Attrition System with
@@ -31,7 +40,7 @@ deadlines.
 **Title:** AttriSense: An End-to-End Workforce Attrition System with
 Fairness-Gated Causal Recommendations and Privacy-Preserving Explanations
 
-**Authors:** Kundan Vanama¹
+**Authors:** Sharada Dogiparthi¹
 
 ¹ *Affiliation*
 

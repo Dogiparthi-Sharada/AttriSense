@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week1/01_AI_CONTRIBUTIONS.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # `AI_CONTRIBUTIONS.md` — drop into repo root
 
 > Paste the block below into `AI_CONTRIBUTIONS.md` at the repository

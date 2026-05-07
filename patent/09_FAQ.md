@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/09_FAQ.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 09 — Defensive FAQ
 
 A single page of pre-built answers for the three audiences who will push

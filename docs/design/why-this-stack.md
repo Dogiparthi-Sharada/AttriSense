@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/design/why-this-stack.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Why this stack
 
 > A 60-second pitch for each major dependency.

@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/02_provisional_application_draft.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 02 — Provisional Patent Application (Draft)
 
 > **DRAFT — NOT YET FILED.** Replace `__INVENTOR__`, `__ADDRESS__`,
@@ -27,7 +36,7 @@ Not applicable.
 
 ## INVENTOR(S)
 
-- __INVENTOR__ (Kundan Vanama), residing at __ADDRESS__, citizen of
+- __INVENTOR__ (Sharada Dogiparthi), residing at __ADDRESS__, citizen of
   __COUNTRY__.
 
 ---

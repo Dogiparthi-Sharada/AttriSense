@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — train_retention_risk_model.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Train the flight-risk model, explain predictions with SHAP, and publish outputs."""
 
 from __future__ import annotations

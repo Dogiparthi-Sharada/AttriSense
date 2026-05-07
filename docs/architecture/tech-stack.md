@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/architecture/tech-stack.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Tech stack
 
 > Every dependency in [`requirements.txt`](https://github.com/Dogiparthi-Sharada/AttriSense/blob/main/requirements.txt) and [`production/pyproject.toml`](https://github.com/Dogiparthi-Sharada/AttriSense/blob/main/production/pyproject.toml) earns its place. Here's why.

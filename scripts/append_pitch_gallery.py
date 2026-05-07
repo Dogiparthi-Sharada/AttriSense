@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — scripts/append_pitch_gallery.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Append a Pixel-pastel dashboard-gallery appendix to AttriSense_VP_Pitch.pptx.
 
 Adds 8 appendix slides, each embedding one freshly-recaptured dashboard
@@ -10,7 +19,7 @@ from pptx.util import Inches, Pt
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.dml.color import RGBColor
 
-REPO = Path('/global/gtsna_northeast6/vanama/repos/AttriSense')
+REPO = Path(__file__).resolve().parents[1]
 PPTX = REPO / 'outputs' / 'AttriSense_VP_Pitch.pptx'
 IMG = REPO / 'docs' / 'images'
 

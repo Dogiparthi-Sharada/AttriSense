@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/ethics/model-card.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Model card
 
 > What this model is, what it isn't, and the obligations that come with using it.

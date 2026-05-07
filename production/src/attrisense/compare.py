@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/src/attrisense/compare.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Compare-Two-Employees side-by-side panel.
 
 Renders feature values, predicted probability, and SHAP attributions for

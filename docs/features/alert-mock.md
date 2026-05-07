@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/alert-mock.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Alert Mock
 
 > Demo of the Slack/Teams notification surface. Shows what a manager would receive for their high-risk reports.

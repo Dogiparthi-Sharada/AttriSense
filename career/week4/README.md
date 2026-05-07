@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week4/README.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Week 4 — Convergence (May 25 – May 31, 2026)
 
 > **Anchor:** Tue May 27 — the **Month-in-Review** post that closes

@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/src/attrisense/identity.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Pseudonymized identifiers for dashboard display.
 
 The model never sees ``Emp_ID``; it is purely a join key. But a human

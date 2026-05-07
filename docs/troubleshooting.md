@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/troubleshooting.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Troubleshooting
 
 > Every error we've personally hit while building AttriSense, with the fix.
@@ -165,7 +174,7 @@ If you see this error after a hand-edit, just delete `data/multilingual_index/` 
 
 ## CSH / TCSH quirks {#csh-quirks}
 
-The vanama dev environment uses `csh`, which has multiple quirks vs. bash:
+This dev environment may use `csh`, which has multiple quirks vs. bash:
 
 | Symptom | Cause | Fix |
 |---|---|---|

@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/operations/configuration.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Configuration
 
 > All knobs in one place. Most users never touch any of them.

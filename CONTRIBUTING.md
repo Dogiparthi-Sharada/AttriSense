@@ -1,3 +1,12 @@
+<!--
+AttriSense — CONTRIBUTING.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Contributing to AttriSense
 
 Thanks for considering a contribution. AttriSense aims to be a **reference example** of explainable, fair, resilient HR analytics — so every PR is judged against that bar.

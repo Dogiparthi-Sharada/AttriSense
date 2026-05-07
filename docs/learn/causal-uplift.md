@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/causal-uplift.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Causal uplift — T-Learner
 
 > *"Will a 10% raise prevent this employee from leaving?"* — a **causal** question. The Random Forest predicts who's at risk; uplift estimates **the effect of an intervention**.

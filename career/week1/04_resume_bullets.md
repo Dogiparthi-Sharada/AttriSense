@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week1/04_resume_bullets.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Resume Bullets — Copy-Paste Ready (v2)
 
 > 6 ATS-optimised bullets, refreshed for the 5-modality stack.

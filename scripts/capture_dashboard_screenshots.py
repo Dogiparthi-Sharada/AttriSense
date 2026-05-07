@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — scripts/capture_dashboard_screenshots.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Capture AttriSense dashboard screenshots via Playwright + system Chrome.
 
 Uses Playwright's `channel="chrome"` to drive the locally-installed

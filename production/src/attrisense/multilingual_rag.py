@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/src/attrisense/multilingual_rag.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Multilingual exit-interview RAG.
 
 Builds a FAISS index over synthetic exit-interview text in three

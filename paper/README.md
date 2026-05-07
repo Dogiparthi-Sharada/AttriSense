@@ -1,3 +1,12 @@
+<!--
+AttriSense — paper/README.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 📄 AttriSense — IEEE Paper, Venues, Patent Path, and Coordinated Launch Plan
 
 This folder contains a draft IEEE-format conference paper plus the full

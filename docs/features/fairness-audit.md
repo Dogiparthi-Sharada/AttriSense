@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/fairness-audit.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Fairness Audit
 
 > EEOC four-fifths rule check, calibration drift, and disparate-impact ratios — by department and (extensible) by any protected attribute.

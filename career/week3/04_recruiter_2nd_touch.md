@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week3/04_recruiter_2nd_touch.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Recruiter 2nd-Touch Templates — soft follow-up (Wed May 20)
 
 > **When:** 5 business days after the Tue May 12 launch DM, no reply.

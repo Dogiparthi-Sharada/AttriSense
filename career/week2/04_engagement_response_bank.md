@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week2/04_engagement_response_bank.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Engagement Response Bank — pre-canned replies for the launch post
 
 > The launch post will pull 6 categories of comments. The first 4

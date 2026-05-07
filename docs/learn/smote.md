@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/smote.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # SMOTE — synthetic minority oversampling
 
 > *"Only 18% of employees leave. The model just predicts 'stays' for everyone and gets 82% accuracy. Useless."* — SMOTE fixes that.

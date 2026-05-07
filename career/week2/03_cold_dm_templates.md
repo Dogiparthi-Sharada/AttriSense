@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week2/03_cold_dm_templates.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Cold-ish DM Templates — 5 variants
 
 > **Rule:** all 5 templates assume you have *some* connection — a

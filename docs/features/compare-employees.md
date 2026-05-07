@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/compare-employees.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Compare Two Employees
 
 > Side-by-side panel for two employees. Shows the risk delta and the top SHAP drivers for each.

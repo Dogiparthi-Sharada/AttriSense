@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/05_faang_marketing_playbook.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 05 — FAANG Marketing Playbook
 
 A 30-day plan to convert the AttriSense build into FAANG / FAANG-adjacent

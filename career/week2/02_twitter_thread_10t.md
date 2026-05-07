@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week2/02_twitter_thread_10t.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Twitter / X Thread — 10 tweets (publish 30 min after LinkedIn)
 
 > **Tone:** technical, curious, no humblebrag. Tech Twitter rewards

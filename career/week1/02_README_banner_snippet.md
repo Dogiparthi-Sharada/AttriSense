@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week1/02_README_banner_snippet.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # README banner snippet (refreshed for v2)
 
 > Paste this block at the very top of `README.md`, immediately under

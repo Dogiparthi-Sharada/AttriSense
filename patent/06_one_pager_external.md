@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/06_one_pager_external.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 06 — One-Pager (External / Public-Safe)
 
 > Use this verbatim for portfolio sites, LinkedIn featured section, and
@@ -50,5 +59,5 @@ single application that runs on commodity hardware.
 
 ### Built by
 
-**Kundan Vanama** · *MS Computer Science · ML Engineer*
+**Sharada Dogiparthi** · *MS Computer Science · ML Engineer*
 *linkedin.com/in/<your-handle> · <your-handle>@<your-domain>*

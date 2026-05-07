@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week2/README.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Week 2 — Launch (May 11 – May 17, 2026)
 
 > **Anchor:** Tuesday May 12, 8:30 AM PT — the LinkedIn launch post.

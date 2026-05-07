@@ -1,7 +1,16 @@
+<!--
+AttriSense — paper/attrisense_patent_aligned.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # AttriSense: An End-to-End Workforce Attrition System with Fairness-Gated Causal Recommendations and Privacy-Preserving Explanations
 
-**Author:** Kundan Vanama (Independent Researcher) — *affiliation TBD* —
-ORCID 0000-0000-0000-0000 — `vanama@example.com`
+**Author:** Sharada Dogiparthi (Independent Researcher) — *affiliation TBD* —
+ORCID 0000-0000-0000-0000 — `dogiparthi.sharada@gmail.com`
 
 > **Patent pending** — US Provisional Application (filing in progress).
 > The seven claims of the provisional map one-to-one to the contributions

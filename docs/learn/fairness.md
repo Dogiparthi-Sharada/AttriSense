@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/fairness.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Fairness — the EEOC four-fifths rule
 
 > A 1978 US Equal Employment Opportunity Commission guideline that's still the legal bright line for adverse impact in hiring and HR decisions.

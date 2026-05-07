@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/tests/test_nl_sql_fallback.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Test the NL\u2192SQL fallback ranker."""
 
 from __future__ import annotations

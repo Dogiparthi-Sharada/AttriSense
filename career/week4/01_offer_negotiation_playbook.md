@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week4/01_offer_negotiation_playbook.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Offer Negotiation Playbook
 
 > Read this **twice** before any phone call where the recruiter says

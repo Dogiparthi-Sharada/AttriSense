@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — production/tests/test_eval.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Tests for the gold question registry and the eval harness scaffolding."""
 
 from __future__ import annotations

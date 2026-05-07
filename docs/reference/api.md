@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/reference/api.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # API reference
 
 > Module-by-module signatures of the `attrisense` package. Everything is importable in isolation — `from attrisense.fairness import run_audit` works without Streamlit.

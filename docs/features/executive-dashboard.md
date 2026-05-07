@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/executive-dashboard.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Executive Dashboard
 
 > The opening tab. KPI cards plus the population risk distribution. What an HR director sees first.

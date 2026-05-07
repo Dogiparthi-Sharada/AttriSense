@@ -1,3 +1,12 @@
+<!--
+AttriSense — patent/04_capstone_report.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # 04 — Capstone Report
 
 **Course context:** Suitable for a 1-semester (12–14 week) MS / senior-year

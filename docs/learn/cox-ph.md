@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/learn/cox-ph.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Cox proportional hazards — survival analysis
 
 > *"Will this employee leave?"* is a **classification** question. *"How long until they leave?"* is a **survival** question. Different math, different answer.

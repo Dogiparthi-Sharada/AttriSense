@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — build_exit_interview_vector_index.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Build the FAISS index used for semantic exit-interview search."""
 
 from __future__ import annotations

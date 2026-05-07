@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week4/03_month_in_review_post.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Month-in-Review LinkedIn Post (Wed May 27, 8:30 AM PT)
 
 > **The post that closes the loop.** Reference everything that

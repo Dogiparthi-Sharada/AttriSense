@@ -1,3 +1,12 @@
+<!--
+AttriSense — docs/features/causal-uplift.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Causal Uplift
 
 > The "what should I do" tab. EconML T-learner picks the intervention most likely to retain each high-risk employee.

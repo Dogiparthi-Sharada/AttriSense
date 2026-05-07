@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week1/README.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Week 1 — Polish & Disclosure (May 2 – May 8, 2026)
 
 > **Pre-condition:** interview happened Friday May 1 at 11:00 AM PST.

@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# AttriSense — paper/build_patent_aligned_docx.py
+# ---------------------------------------------------------------------------
+# Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+# Version: 1.0.0
+# Date   : 2026-05-07
+# License: MIT — see LICENSE in repo root.
+# Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+# ---------------------------------------------------------------------------
 """Build attrisense_patent_aligned.docx — IEEE-style, python-docx only.
 
 Calls the existing build_docx.main() with patched MD/OUT paths. No pandoc.

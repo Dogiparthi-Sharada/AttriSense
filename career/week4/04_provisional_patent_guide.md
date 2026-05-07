@@ -1,3 +1,12 @@
+<!--
+AttriSense — career/week4/04_provisional_patent_guide.md
+Author : Sharada Dogiparthi <dogiparthi.sharada@gmail.com>
+Version: 1.0.0
+Date   : 2026-05-07
+License: MIT — see LICENSE in repo root.
+Copyright (c) 2026 Sharada Dogiparthi. All rights reserved.
+-->
+
 # Provisional Patent Decision Guide
 
 > **Purpose:** decide whether to file a US provisional patent on any
