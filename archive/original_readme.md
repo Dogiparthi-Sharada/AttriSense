@@ -33,7 +33,7 @@ The current dataset is synthetic, so the project is safe to run, demo, publish, 
 
 ## Dashboard Screenshots
 
-These screenshots were captured from the restored Streamlit dashboard. Original screenshots were captured on `8501`; the Tier 1/Tier 2 screenshots were captured on `8503`. The capture logs live in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt) and [outputs/tierFeatureCaptureLog.txt](outputs/tierFeatureCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
+These screenshots were captured from the restored Streamlit dashboard. Original screenshots were captured on `8503`; the Tier 1/Tier 2 screenshots were captured on `8503`. The capture logs live in [outputs/dashboardCaptureLog.txt](outputs/dashboardCaptureLog.txt) and [outputs/tierFeatureCaptureLog.txt](outputs/tierFeatureCaptureLog.txt), and the machine-readable manifest lives in [outputs/dashboardScreenshotManifest.json](outputs/dashboardScreenshotManifest.json).
 The full README asset inventory lives in [outputs/readmeAssetInventory.txt](outputs/readmeAssetInventory.txt).
 
 | Asset | What it shows |
@@ -251,10 +251,10 @@ python launch_streamlit_app.py
 Open:
 
 ```text
-http://localhost:8501
+http://localhost:8503
 ```
 
-By default, `launch_streamlit_app.py` binds Streamlit to `0.0.0.0:8501`.
+By default, `launch_streamlit_app.py` binds Streamlit to `0.0.0.0:8503`.
 
 ## Rebuild the Demo Pipeline
 

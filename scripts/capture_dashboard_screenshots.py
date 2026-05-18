@@ -14,7 +14,7 @@ Google Chrome (no chromium download needed). Captures the landing
 banner, then clicks each tab and saves a full-page PNG.
 
 Run:
-    .venv/bin/python scripts/capture_dashboard_screenshots.py [--port 8501]
+    .venv/bin/python scripts/capture_dashboard_screenshots.py [--port 8503]
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ TABS = [
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port", default=8501, type=int)
+    ap.add_argument("--port", default=8503, type=int)
     ap.add_argument("--host", default="localhost")
     args = ap.parse_args()
     base = f"http://{args.host}:{args.port}/"

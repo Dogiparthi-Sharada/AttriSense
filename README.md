@@ -195,10 +195,10 @@ python launch_streamlit_app.py
 ```bash
 cd production
 docker build -t attrisense:latest -f Dockerfile ..
-docker run --rm -p 8501:8501 --env-file ../.env attrisense:latest
+docker run --rm -p 8503:8503 --env-file ../.env attrisense:latest
 ```
 
-Browse to <http://localhost:8501>.
+Browse to <http://localhost:8503>.
 
 > **Optional:** copy `.env.example` to `.env`, add `OPENAI_API_KEY=sk-...`, and optionally set `OPENAI_MODEL=gpt-4o-mini` to enable the AI Assistant + multilingual OpenAI embeddings. **Without a key, the dashboard still works** — it falls back to TF-IDF and hashing embeddings.
 

@@ -37,7 +37,7 @@ pip install -r requirements.txt
 python launch_streamlit_app.py
 ```
 
-Open `http://localhost:8501`.
+Open `http://localhost:8503`.
 
 ## 5. Optional AI Features
 

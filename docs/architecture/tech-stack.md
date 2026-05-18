@@ -79,7 +79,7 @@ The dark theme lives in [`production/src/attrisense/theme.py`](../reference/api.
 |---|---|
 | **Base image** | `python:3.11-slim` |
 | **Build** | `pip install -e ".[dev,causal]"` |
-| **Entrypoint** | `streamlit run streamlit_app.py --server.port 8501 --server.headless true` |
+| **Entrypoint** | `streamlit run streamlit_app.py --server.port 8503 --server.headless true` |
 | **Size** | ~720 MB — dominated by sklearn + econml + numba |
 | **CI** | GitHub Actions: lint + test on push |
 

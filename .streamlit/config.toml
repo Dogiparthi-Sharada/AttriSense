@@ -1,7 +1,7 @@
 [server]
 address = "0.0.0.0"
 headless = true
-port = 8501
+port = 8503
 
 [browser]
 gatherUsageStats = false

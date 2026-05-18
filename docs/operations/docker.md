@@ -50,7 +50,7 @@ Build time: ~3 minutes from clean. Image size: ~720 MB compressed.
     ```bash
     make docker-run
     # OR
-    docker run --rm -p 8501:8501 \
+    docker run --rm -p 8503:8503 \
       --env-file ../.env \
       -v $(pwd)/../outputs:/app/outputs \
       attrisense:latest
@@ -59,7 +59,7 @@ Build time: ~3 minutes from clean. Image size: ~720 MB compressed.
 === "PowerShell"
 
     ```powershell
-    docker run --rm -p 8501:8501 `
+    docker run --rm -p 8503:8503 `
       --env-file ..\.env `
       -v ${PWD}\..\outputs:/app/outputs `
       attrisense:latest
@@ -68,13 +68,13 @@ Build time: ~3 minutes from clean. Image size: ~720 MB compressed.
 === "cmd.exe"
 
     ```cmd
-    docker run --rm -p 8501:8501 ^
+    docker run --rm -p 8503:8503 ^
       --env-file ..\.env ^
       -v %cd%\..\outputs:/app/outputs ^
       attrisense:latest
     ```
 
-Browse to `http://localhost:8501`.
+Browse to `http://localhost:8503`.
 
 ## What's in the image
 
@@ -83,9 +83,9 @@ Browse to `http://localhost:8501`.
 | Base | `python:3.11-slim` |
 | User | non-root `appuser` (UID 1000) |
 | Working dir | `/app` |
-| Entrypoint | `streamlit run production/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true` |
-| Exposed port | 8501 |
-| Health check | `curl -fsS http://localhost:8501/_stcore/health` |
+| Entrypoint | `streamlit run production/streamlit_app.py --server.port 8503 --server.address 0.0.0.0 --server.headless true` |
+| Exposed port | 8503 |
+| Health check | `curl -fsS http://localhost:8503/_stcore/health` |
 
 ## Layers (rough)
 
@@ -105,7 +105,7 @@ Anything in `.env` works the same way in the container:
 ```bash
 docker run -e OPENAI_API_KEY=$OPENAI_API_KEY \
            -e LANGCHAIN_TRACING_V2=true \
-           -p 8501:8501 attrisense
+           -p 8503:8503 attrisense
 ```
 
 Or use `--env-file` (path separators per shell):
@@ -113,13 +113,13 @@ Or use `--env-file` (path separators per shell):
 === "Linux / macOS / Git Bash"
 
     ```bash
-    docker run --env-file ../.env -p 8501:8501 attrisense
+    docker run --env-file ../.env -p 8503:8503 attrisense
     ```
 
 === "PowerShell / cmd"
 
     ```powershell
-    docker run --env-file ..\.env -p 8501:8501 attrisense
+    docker run --env-file ..\.env -p 8503:8503 attrisense
     ```
 
 ## Volume mounts
@@ -127,7 +127,7 @@ Or use `--env-file` (path separators per shell):
 To persist `outputs/` (fairness reports, eval reports, screenshots) between runs:
 
 ```bash
-docker run --rm -p 8501:8501 \
+docker run --rm -p 8503:8503 \
   -v $(pwd)/../outputs:/app/outputs \
   attrisense
 ```
@@ -166,7 +166,7 @@ Not provided. The single-container deployment doesn't need it. If you want one, 
 services:
   attrisense:
     build: { context: ., dockerfile: production/Dockerfile }
-    ports: ["8501:8501"]
+    ports: ["8503:8503"]
     env_file: .env
 ```
 

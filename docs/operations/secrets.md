@@ -107,13 +107,13 @@ Streamlit injects them as env vars at runtime; the same `os.getenv("OPENAI_API_K
 ## Docker
 
 ```bash
-docker run --env-file .env -p 8501:8501 attrisense
+docker run --env-file .env -p 8503:8503 attrisense
 ```
 
 Or pass individually:
 
 ```bash
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8501:8501 attrisense
+docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8503:8503 attrisense
 ```
 
 Never bake the key into the image — `docker history` exposes layer commands.

@@ -57,7 +57,7 @@ Get the AttriSense dashboard running in **under five minutes** — on Windows, m
     python launch_streamlit_app.py
     ```
 
-Open the URL Streamlit prints — default `http://localhost:8501`. Done.
+Open the URL Streamlit prints — default `http://localhost:8503`. Done.
 
 ---
 
@@ -197,7 +197,7 @@ Skip the third step if you don't have an OpenAI key — the AI Assistant simply 
 
 ## Step 5 — Run a dashboard
 
-### Original demo (port 8501)
+### Original demo (port 8503)
 
 ```bash
 python launch_streamlit_app.py
@@ -237,7 +237,7 @@ python launch_streamlit_app.py
     ```powershell
     cd production
     docker build -t attrisense:latest -f Dockerfile ..
-    docker run --rm -p 8501:8501 --env-file ..\.env attrisense:latest
+    docker run --rm -p 8503:8503 --env-file ..\.env attrisense:latest
     ```
 
 === "macOS / Linux"
@@ -248,7 +248,7 @@ python launch_streamlit_app.py
     make docker-run
     ```
 
-Browse to `http://localhost:8501`.
+Browse to `http://localhost:8503`.
 
 ## Step 6 — (Optional) Configure secrets
 

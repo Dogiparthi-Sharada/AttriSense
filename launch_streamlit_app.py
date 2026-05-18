@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         default="0.0.0.0",
         help="Host/IP address for Streamlit to bind to.",
     )
-    parser.add_argument("--port", type=int, default=8501, help="Streamlit port.")
+    parser.add_argument("--port", type=int, default=8503, help="Streamlit port.")
     return parser.parse_args()
 
 

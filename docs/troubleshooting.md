@@ -55,7 +55,7 @@ This creates `hr_enterprise.db` with all four tables in ~12 seconds.
 
 ### `Address already in use` / port conflict
 
-Streamlit's default port (8501) is taken.
+Streamlit's default port (8503) is taken.
 
 ```bash
 streamlit run streamlit_app.py --server.port 8502
@@ -170,7 +170,7 @@ If you see this error after a hand-edit, just delete `data/multilingual_index/` 
 | Backslash paths break in scripts | Mixing forward/back slashes | In PowerShell prefer `Join-Path`; in Python use `pathlib.Path` |
 | `--env-file ../.env` says file not found | Wrong separator on Windows | Use `..\.env` in PowerShell/cmd |
 | Line continuation broken | `\` is not a continuation char in PowerShell/cmd | Use backtick `` ` `` in PowerShell, caret `^` in cmd.exe |
-| Port 8501 in use | Another Streamlit running | `Get-Process | Where-Object { $_.ProcessName -like 'python*' } | Stop-Process` (PowerShell) or pick a new port `streamlit run ... --server.port 8502` |
+| Port 8503 in use | Another Streamlit running | `Get-Process | Where-Object { $_.ProcessName -like 'python*' } | Stop-Process` (PowerShell) or pick a new port `streamlit run ... --server.port 8502` |
 
 ## CSH / TCSH quirks {#csh-quirks}
 
@@ -254,13 +254,13 @@ rm -rf .streamlit/.cache
 
 ### `port already allocated`
 
-Another container already on 8501.
+Another container already on 8503.
 
 ```bash
 docker ps
 docker stop <other_container>
 # OR map to a different host port
-docker run -p 8502:8501 attrisense
+docker run -p 8502:8503 attrisense
 ```
 
 ### Health check fails on first run

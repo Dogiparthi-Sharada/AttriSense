@@ -52,10 +52,10 @@ RUN useradd --create-home --uid 10001 attrisense \
     && chown -R attrisense:attrisense /app
 USER attrisense
 
-EXPOSE 8501
+EXPOSE 8503
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl --fail --silent http://127.0.0.1:8501/_stcore/health || exit 1
+    CMD curl --fail --silent http://127.0.0.1:8503/_stcore/health || exit 1
 
 CMD ["streamlit", "run", "production/streamlit_app.py", \
-     "--server.address=0.0.0.0", "--server.port=8501", \
+     "--server.address=0.0.0.0", "--server.port=8503", \
      "--server.headless=true", "--browser.gatherUsageStats=false"]

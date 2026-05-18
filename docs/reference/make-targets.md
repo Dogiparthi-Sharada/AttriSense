@@ -29,7 +29,7 @@ All targets live in [`production/Makefile`](https://github.com/Dogiparthi-Sharad
 | Target | What it does |
 |---|---|
 | `make run` | Start the production dashboard on a free port |
-| `make run-original` | Start the original `streamlit_app.py` (port 8501 by default) |
+| `make run-original` | Start the original `streamlit_app.py` (port 8503 by default) |
 
 ## Tests + lint
 
@@ -47,7 +47,7 @@ All targets live in [`production/Makefile`](https://github.com/Dogiparthi-Sharad
 | Target | What it does |
 |---|---|
 | `make docker-build` | Build `attrisense:latest` image |
-| `make docker-run` | `docker run -p 8501:8501 --env-file ../.env attrisense:latest` |
+| `make docker-run` | `docker run -p 8503:8503 --env-file ../.env attrisense:latest` |
 | `make docker-shell` | Interactive shell inside the image |
 
 ## Docs

@@ -153,10 +153,10 @@ Expected output:
     ```powershell
     cd production
     docker build -t attrisense:latest -f Dockerfile ..
-    docker run --rm -p 8501:8501 --env-file ..\.env attrisense:latest
+    docker run --rm -p 8503:8503 --env-file ..\.env attrisense:latest
     ```
 
-The image is `python:3.11-slim` based, ~720 MB compressed. The container exposes port 8501. Override with `-p 8080:8501` if needed.
+The image is `python:3.11-slim` based, ~720 MB compressed. The container exposes port 8503. Override with `-p 8080:8503` if needed.
 
 For the full Docker walk-through see [Docker](docker.md).
 
