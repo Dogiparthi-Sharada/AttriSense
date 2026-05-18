@@ -32,6 +32,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from attrisense.config import DATABASE_PATH, EVAL_REPORT_PATH, OUTPUTS_DIR
 from attrisense.gold_questions import GOLD_QUESTIONS, GoldQuestion, by_category
 
@@ -85,6 +87,44 @@ def _execute(sql: str) -> list[tuple]:
         connection.execute("PRAGMA query_only = ON")
         cursor = connection.execute(sql)
         return list(cursor.fetchall())
+
+
+def _expected_rowcount(question: GoldQuestion) -> int:
+    """Best-effort row count for a skipped question's gold SQL."""
+    try:
+        return len(_normalise_rows(_execute(question.expected_sql)))
+    except sqlite3.Error:
+        return 0
+
+
+def _is_auth_error(error: str | None) -> bool:
+    """Return True when a case failed before SQL generation due to auth."""
+    if not error:
+        return False
+    text = error.lower()
+    return (
+        "openai authentication failed" in text
+        or "invalid_api_key" in text
+        or "incorrect api key" in text
+        or "error code: 401" in text
+    )
+
+
+def _skipped_case(question: GoldQuestion, error: str) -> EvaluationCase:
+    """Create a case that clearly did not evaluate model quality."""
+    return EvaluationCase(
+        id=question.id,
+        category=question.category,
+        question=question.question,
+        expected_sql=question.expected_sql,
+        generated_sql=None,
+        error=error,
+        exact_match=False,
+        cardinality_match=False,
+        expected_rowcount=_expected_rowcount(question),
+        generated_rowcount=None,
+        duration_seconds=0.0,
+    )
 
 
 def _evaluate_one(
@@ -170,57 +210,94 @@ def _accuracy(cases: list[EvaluationCase], field: str) -> float:
     return hits / len(scored)
 
 
-def run_evaluation(agent_callable: Any | None = None) -> EvaluationReport:
-    """Run the full evaluation. Returns the report and writes it to disk."""
-    if not Path(DATABASE_PATH).exists():
-        return EvaluationReport(
-            total=0,
-            skipped=0,
-            exact_accuracy=0.0,
-            cardinality_accuracy=0.0,
-            accuracy_by_category={},
-            cases=[],
-            note=f"Skipped \u2014 {DATABASE_PATH.name} missing.",
-        )
-
-    if agent_callable is None:
-        if not os.getenv("OPENAI_API_KEY"):
-            return EvaluationReport(
-                total=len(GOLD_QUESTIONS),
-                skipped=len(GOLD_QUESTIONS),
-                exact_accuracy=0.0,
-                cardinality_accuracy=0.0,
-                accuracy_by_category={},
-                cases=[],
-                note="Skipped \u2014 OPENAI_API_KEY not set.",
-            )
-        # Late import so the module is usable in tests without LangChain.
-        from natural_language_sql import query_database_with_ai
-        agent_callable = query_database_with_ai
-
-    cases = [_evaluate_one(question, agent_callable) for question in GOLD_QUESTIONS]
-
+def _build_report(cases: list[EvaluationCase], note: str = "") -> EvaluationReport:
+    """Assemble a report from evaluated or skipped cases."""
     by_cat: dict[str, dict[str, float]] = {}
     for category, questions in by_category().items():
         category_cases = [case for case in cases if case.category == category]
         by_cat[category] = {
-            "count": len(category_cases),
+            "count": len(category_cases) or len(questions),
             "exact_accuracy": _accuracy(category_cases, "exact_match"),
             "cardinality_accuracy": _accuracy(category_cases, "cardinality_match"),
         }
 
-    report = EvaluationReport(
+    return EvaluationReport(
         total=len(cases),
         skipped=sum(1 for case in cases if case.generated_sql is None and case.error),
         exact_accuracy=_accuracy(cases, "exact_match"),
         cardinality_accuracy=_accuracy(cases, "cardinality_match"),
         accuracy_by_category=by_cat,
         cases=cases,
+        note=note,
     )
 
+
+def _write_report(report: EvaluationReport) -> EvaluationReport:
+    """Persist a report and return it for caller convenience."""
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
     EVAL_REPORT_PATH.write_text(json.dumps(_serialise(report), indent=2))
     return report
+
+
+def run_evaluation(agent_callable: Any | None = None) -> EvaluationReport:
+    """Run the full evaluation. Returns the report and writes it to disk."""
+    load_dotenv(override=True)
+
+    if not Path(DATABASE_PATH).exists():
+        return _write_report(
+            EvaluationReport(
+                total=0,
+                skipped=0,
+                exact_accuracy=0.0,
+                cardinality_accuracy=0.0,
+                accuracy_by_category={},
+                cases=[],
+                note=f"Skipped - {DATABASE_PATH.name} missing.",
+            )
+        )
+
+    if agent_callable is None:
+        if not os.getenv("OPENAI_API_KEY"):
+            cases = [
+                _skipped_case(question, "Skipped - OPENAI_API_KEY not set.")
+                for question in GOLD_QUESTIONS
+            ]
+            return _write_report(
+                _build_report(
+                    cases,
+                    note=(
+                        "Skipped - OPENAI_API_KEY is not set. The evaluation "
+                        "did not call the model or grade SQL accuracy."
+                    ),
+                )
+            )
+        # Late import so the module is usable in tests without LangChain.
+        from natural_language_sql import query_database_with_ai
+        agent_callable = query_database_with_ai
+
+    questions = list(GOLD_QUESTIONS)
+    if not questions:
+        return _write_report(_build_report([]))
+
+    first_case = _evaluate_one(questions[0], agent_callable)
+    if _is_auth_error(first_case.error):
+        error = first_case.error or "OpenAI authentication failed."
+        cases = [_skipped_case(question, error) for question in questions]
+        return _write_report(
+            _build_report(
+                cases,
+                note=(
+                    "Skipped - OpenAI authentication failed before SQL "
+                    "generation. The evaluation did not grade model quality; "
+                    "update OPENAI_API_KEY and run again."
+                ),
+            )
+        )
+
+    cases = [first_case] + [
+        _evaluate_one(question, agent_callable) for question in questions[1:]
+    ]
+    return _write_report(_build_report(cases))
 
 
 def _serialise(report: EvaluationReport) -> dict:

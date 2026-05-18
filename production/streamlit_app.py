@@ -642,6 +642,10 @@ def _ai_assistant_tab(df: pd.DataFrame) -> None:
 
         reason = result if isinstance(result, str) else "agent returned no SQL"
         st.warning(f"Could not generate a query \u2014 {reason}")
+        st.info(
+            "If the request has multiple parts, break it into smaller questions "
+            "so the AI Assistant can build and verify one SQL query at a time."
+        )
         st.markdown("**Closest gold-set questions** (click to run a known-good query):")
         suggestions = suggest(question, top_k=3)
         if not suggestions:
@@ -684,12 +688,26 @@ def _eval_tab(df: pd.DataFrame) -> None:
     if report.get("note"):
         st.warning(report["note"])
 
-    cols = st.columns(3)
-    cols[0].metric("Total questions", report["total"])
-    cols[1].metric("Exact accuracy", f"{report['exact_accuracy'] * 100:.1f}%")
-    cols[2].metric("Cardinality accuracy", f"{report['cardinality_accuracy'] * 100:.1f}%")
+    skipped = int(report.get("skipped", 0) or 0)
+    total = int(report.get("total", 0) or 0)
+    all_skipped = total > 0 and skipped >= total
 
-    if report["accuracy_by_category"]:
+    cols = st.columns(4)
+    cols[0].metric("Total questions", report["total"])
+    cols[1].metric("Skipped", skipped)
+    cols[2].metric(
+        "Exact accuracy",
+        "Not evaluated" if all_skipped else f"{report['exact_accuracy'] * 100:.1f}%",
+    )
+    cols[3].metric(
+        "Cardinality accuracy",
+        "Not evaluated" if all_skipped else f"{report['cardinality_accuracy'] * 100:.1f}%",
+    )
+
+    if all_skipped:
+        st.info("No accuracy score was computed because the model did not return SQL.")
+
+    if report["accuracy_by_category"] and not all_skipped:
         category_frame = pd.DataFrame(report["accuracy_by_category"]).T.reset_index()
         category_frame.columns = ["category", "count", "exact_accuracy", "cardinality_accuracy"]
         fig = px.bar(

@@ -94,7 +94,7 @@ Side-by-side panel for two employees.
 <td>
 
 ### Causal Uplift
-EconML T-learner over three treatment arms.
+EconML T-learner over three treatment arms, with a sklearn fallback when optional causal extras are not installed.
 
 ![Causal Uplift](docs/images/causal.png)
 
@@ -200,7 +200,7 @@ docker run --rm -p 8501:8501 --env-file ../.env attrisense:latest
 
 Browse to <http://localhost:8501>.
 
-> **Optional:** copy `.env.example` to `.env` and add `OPENAI_API_KEY=sk-...` to enable the AI Assistant + multilingual OpenAI embeddings. **Without a key, the dashboard still works** — it falls back to TF-IDF and hashing embeddings.
+> **Optional:** copy `.env.example` to `.env`, add `OPENAI_API_KEY=sk-...`, and optionally set `OPENAI_MODEL=gpt-4o-mini` to enable the AI Assistant + multilingual OpenAI embeddings. **Without a key, the dashboard still works** — it falls back to TF-IDF and hashing embeddings.
 
 Full installation guide with all four shells (PowerShell, cmd, bash, csh): [docs/quickstart.md](docs/quickstart.md).
 
@@ -213,10 +213,10 @@ Full installation guide with all four shells (PowerShell, cmd, bash, csh): [docs
 | Retention classifier | RandomForest + SMOTE | [`train_retention_risk_model.py`](train_retention_risk_model.py) |
 | Survival analysis | Cox proportional hazards (`lifelines`) | same |
 | Per-employee explanations | SHAP TreeExplainer | same |
-| Causal uplift | EconML T-learner (3 treatment arms) | [`production/src/attrisense/causal_uplift.py`](production/src/attrisense/causal_uplift.py) |
+| Causal uplift | EconML T-learner (3 treatment arms) with sklearn fallback | [`production/src/attrisense/causal_uplift.py`](production/src/attrisense/causal_uplift.py) |
 | Fairness audit | EEOC four-fifths rule | [`production/src/attrisense/fairness.py`](production/src/attrisense/fairness.py) |
 | NL→SQL Q&A | LangChain + OpenAI + SQLite, with TF-IDF fallback | [`natural_language_sql.py`](natural_language_sql.py) + [`production/src/attrisense/nl_sql_fallback.py`](production/src/attrisense/nl_sql_fallback.py) |
-| NL→SQL eval | 50 gold questions across 4 categories | [`production/src/attrisense/nl_sql_eval.py`](production/src/attrisense/nl_sql_eval.py) |
+| NL→SQL eval | 50 gold questions across 4 categories; reports skipped status when no API key is configured | [`production/src/attrisense/nl_sql_eval.py`](production/src/attrisense/nl_sql_eval.py) |
 | Multilingual RAG | LangChain + FAISS, OpenAI → hashing fallback | [`production/src/attrisense/multilingual_rag.py`](production/src/attrisense/multilingual_rag.py) |
 | Onboarding tour | session-state cursor over 6 steps | [`production/src/attrisense/onboarding.py`](production/src/attrisense/onboarding.py) |
 | Slack/Teams mock | preview-only card renderer | [`production/src/attrisense/slack_alert_mock.py`](production/src/attrisense/slack_alert_mock.py) |

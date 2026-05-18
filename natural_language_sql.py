@@ -25,6 +25,8 @@ from langchain_openai import ChatOpenAI
 from config import DATABASE_PATH, SQL_TABLE_NAME
 
 
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+
 load_dotenv(override=True)
 
 SQL_PROMPT = PromptTemplate(
@@ -90,6 +92,50 @@ def _execute_read_only(sql: str) -> dict[str, Any]:
     return {"columns": columns, "rows": rows}
 
 
+def _openai_key_config_error() -> str | None:
+    """Return a user-safe configuration error for missing placeholder keys."""
+    load_dotenv(override=True)
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not key:
+        return "OPENAI_API_KEY is not configured. Add a valid key to `.env` to use AI queries."
+
+    placeholder_markers = ("your_openai_api_key", "sk-...", "replace_me", "<")
+    if any(marker in key.lower() for marker in placeholder_markers):
+        return "OPENAI_API_KEY is still a placeholder. Replace it in `.env` with a valid key."
+    return None
+
+
+def _format_openai_error(error: Exception) -> str:
+    """Convert provider errors into safe, actionable app messages."""
+    status_code = getattr(error, "status_code", None)
+    error_code = getattr(error, "code", None)
+    text = str(error).lower()
+
+    if (
+        status_code == 401
+        or error_code == "invalid_api_key"
+        or "invalid_api_key" in text
+        or "incorrect api key" in text
+    ):
+        return (
+            "OpenAI authentication failed. The configured OPENAI_API_KEY was "
+            "rejected. Add a valid key to `.env` or update the environment, "
+            "then try again."
+        )
+    if status_code == 429 or "insufficient_quota" in text or "rate limit" in text:
+        return (
+            "OpenAI quota or rate limit blocked the request. Check the account "
+            "billing, project limits, or try again later."
+        )
+    if "model_not_found" in text or "does not exist" in text:
+        model_name = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+        return (
+            f"OpenAI model `{model_name}` is unavailable for this key. Set "
+            "`OPENAI_MODEL` in `.env` to a model available to the project."
+        )
+    return f"OpenAI query failed: {error.__class__.__name__}. Check the configured key and model."
+
+
 def query_database_with_ai(user_question: str) -> tuple[str | None, dict[str, Any] | str]:
     """Convert a plain-English HR question into SQL and execute it safely.
 
@@ -101,13 +147,21 @@ def query_database_with_ai(user_question: str) -> tuple[str | None, dict[str, An
         A tuple of `(sql_query, result)`. `sql_query` is `None` when the request
         fails, and `result` is either a result dictionary or a user-facing error.
     """
+    smaller_task_hint = (
+        "If this question combines multiple asks, break it into smaller tasks "
+        "so the AI Assistant can build and verify one safe SQL query at a time."
+    )
     if not DATABASE_PATH.exists():
-        return None, "Database not found. Run `python train_retention_risk_model.py` first."
-    if not os.getenv("OPENAI_API_KEY"):
-        return None, "OPENAI_API_KEY is not configured. Add it to `.env` to use AI queries."
+        return None, (
+            "Database not found. Run `python train_retention_risk_model.py` first. "
+            f"{smaller_task_hint}"
+        )
+    config_error = _openai_key_config_error()
+    if config_error:
+        return None, f"{config_error} {smaller_task_hint}"
 
     db = SQLDatabase.from_uri(f"sqlite:///{DATABASE_PATH}", include_tables=[SQL_TABLE_NAME])
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    llm = ChatOpenAI(model=os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL), temperature=0)
     chain = create_sql_query_chain(llm, db, prompt=SQL_PROMPT)
 
     try:
@@ -117,8 +171,12 @@ def query_database_with_ai(user_question: str) -> tuple[str | None, dict[str, An
         sql = _clean_sql(raw_sql)
         _validate_read_only_sql(sql)
         return sql, _execute_read_only(sql)
+    except ValueError as exc:
+        return None, f"SQL validation error: {exc}. {smaller_task_hint}"
+    except sqlite3.Error as exc:
+        return None, f"SQL execution error: {exc}. {smaller_task_hint}"
     except Exception as exc:
-        return None, f"Error: {exc}"
+        return None, f"{_format_openai_error(exc)} {smaller_task_hint}"
 
 
 if __name__ == "__main__":

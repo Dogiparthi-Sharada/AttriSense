@@ -16,9 +16,11 @@ intervention:
 - `tenure_bonus`: a one-time +12 month tenure equivalent (relocation,
   rotation, retention bonus that buys 12 months of stability)
 
-We use a T-learner (Two-Models meta-learner) from EconML. The synthetic
-data is small enough that this trains in seconds; for a real workforce
-the same code path scales without modification.
+We use a T-learner (Two-Models meta-learner), preferring EconML when the
+optional causal extra is installed and falling back to an equivalent
+sklearn-only implementation for the standard dashboard install. The
+synthetic data is small enough that this trains in seconds; for a real
+workforce the same code path scales without modification.
 
 The output is the predicted RISK REDUCTION per intervention per
 employee, which the dashboard turns into a recommended action.
@@ -44,6 +46,20 @@ from attrisense.config import (
 )
 
 
+class SklearnTLearnerFallback:
+    """Small T-learner fallback used when the optional EconML extra is absent."""
+
+    def __init__(self, control_model: object, treatment_model: object) -> None:
+        self.control_model = control_model
+        self.treatment_model = treatment_model
+
+    def effect(self, features: np.ndarray) -> np.ndarray:
+        """Return E[Y(1) - Y(0) | X] using two sklearn outcome models."""
+        control_risk = self.control_model.predict_proba(features)[:, 1]
+        treatment_risk = self.treatment_model.predict_proba(features)[:, 1]
+        return treatment_risk - control_risk
+
+
 @dataclass(frozen=True)
 class Intervention:
     """Definition of a candidate retention intervention."""
@@ -58,7 +74,7 @@ class Intervention:
 
 
 def _salary_lift(frame: pd.DataFrame, multiplier: float = 1.10) -> pd.DataFrame:
-    frame["Base_Salary"] = frame["Base_Salary"] * multiplier
+    frame["Base_Salary"] = frame["Base_Salary"].astype(float) * multiplier
     return frame
 
 
@@ -120,15 +136,16 @@ def _baseline_features(predictions: pd.DataFrame) -> pd.DataFrame:
 
 
 def _fit_t_learner() -> "object":  # pragma: no cover - thin wrapper
-    """Train an EconML T-learner on the synthetic dataset.
+    """Train a T-learner on the synthetic dataset.
 
-    The T-learner trains one outcome model per treatment arm. We use the
-    Voluntary_Turnover label as the outcome and a synthetic intervention
-    column (here we simulate the "treated" arm by applying the salary lift
-    to half of the historical sample). For a real workforce, the treated
-    arm would be observed data from past compensation reviews.
+    The T-learner trains one outcome model per treatment arm. EconML provides
+    the production implementation when installed; otherwise the dashboard uses
+    the local sklearn fallback with the same two-model pattern. We use the
+    Voluntary_Turnover label as the outcome and a synthetic intervention column
+    (here we simulate the "treated" arm by applying the salary lift to half of
+    the historical sample). For a real workforce, the treated arm would be
+    observed data from past compensation reviews.
     """
-    from econml.metalearners import TLearner
     from sklearn.ensemble import RandomForestClassifier
 
     df = _load_dataset()
@@ -141,13 +158,34 @@ def _fit_t_learner() -> "object":  # pragma: no cover - thin wrapper
     # Apply the salary lift to "treated" rows so the synthetic counterfactual
     # has signal. This lets the T-learner learn a non-zero CATE.
     treated_features = feature_frame.copy()
+    treated_features["Base_Salary"] = treated_features["Base_Salary"].astype(float)
     treated_features.loc[treatment == 1, "Base_Salary"] *= 1.10
+
+    def forest() -> RandomForestClassifier:
+        return RandomForestClassifier(
+            n_estimators=80, random_state=RANDOM_SEED, n_jobs=-1
+        )
+
+    try:
+        from econml.metalearners import TLearner
+    except ModuleNotFoundError as error:
+        if error.name != "econml":
+            raise
+        control_model = forest()
+        treatment_model = forest()
+        control_mask = treatment == 0
+        treatment_mask = treatment == 1
+        control_model.fit(
+            treated_features.loc[control_mask].to_numpy(), outcome[control_mask]
+        )
+        treatment_model.fit(
+            treated_features.loc[treatment_mask].to_numpy(), outcome[treatment_mask]
+        )
+        return SklearnTLearnerFallback(control_model, treatment_model)
 
     learner = TLearner(
         models=[
-            RandomForestClassifier(
-                n_estimators=80, random_state=RANDOM_SEED, n_jobs=-1
-            )
+            forest()
             for _ in range(2)
         ]
     )
